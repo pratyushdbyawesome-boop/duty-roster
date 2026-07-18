@@ -1,10 +1,11 @@
 // Minimal offline cache so the tool opens even with no internet connection.
-const CACHE_NAME = 'duty-roster-cache-v1';
-const FILES_TO_CACHE = [
-  './duty-roster-tool.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+const CACHE_NAME = 'duty-roster-cache-v2';
+     const FILES_TO_CACHE = [
+       './',
+       './index.html',
+       './manifest.json',
+       './icon-192.png',
+       './icon-512.png'
 ];
 
 self.addEventListener('install', function (event) {
