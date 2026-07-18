@@ -1545,7 +1545,7 @@
         document.addEventListener('DOMContentLoaded', function() {
 
             const loaded = loadState();
-            if (!loaded || state.announcers.length === 0) {
+            if (!loaded) {
                 state.announcers = seedAnnouncers();
                 saveState();
             }
