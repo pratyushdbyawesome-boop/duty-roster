@@ -2,7 +2,7 @@
   "name": "Duty Roster Tool - Akashvani Ambikapur",
   "short_name": "Duty Roster",
   "description": "Weekly duty roster generator for casual announcers",
-  "start_url": "./duty-roster-tool.html",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0e1a22",
