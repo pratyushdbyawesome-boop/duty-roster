@@ -1216,10 +1216,10 @@
 
                 let cands = pool.filter(a => !usedThisWeek.has(a.id) && isEligible(a, slot));
                 if (state.fairness) {
-                    cands.sort((a, b) => (state.history[a.id] || 0) - (state.history[b.id] || 0));
-                    const minLoad = cands.length ? (state.history[cands[0].id] || 0) : 0;
-                    const tier = cands.filter(a => (state.history[a.id] || 0) === minLoad);
-                    cands = shuffle(tier).concat(shuffle(cands.filter(a => (state.history[a.id] || 0) !== minLoad)));
+                    cands.sort((a, b) => (state.history[a.name] || 0) - (state.history[b.name] || 0));
+                    const minLoad = cands.length ? (state.history[cands[0].name] || 0) : 0;
+                    const tier = cands.filter(a => (state.history[a.name] || 0) === minLoad);
+                    cands = shuffle(tier).concat(shuffle(cands.filter(a => (state.history[a.name] || 0) !== minLoad)));
                 } else {
                     cands = shuffle(cands);
                 }
@@ -1376,11 +1376,9 @@
             const panel = document.getElementById('historyPanel');
             if (!panel) return;
 
-            // ── total duty counts (by name, since ids can get reused/renamed) ──
-            const nameById = {};
-            state.announcers.forEach(a => { nameById[a.id] = a.name; });
+            // ── total duty counts (keyed by name so counts survive re-parses) ──
             const rows = Object.keys(state.history)
-                .map(id => ({ name: nameById[id] || '(removed) ' + id, count: state.history[id] }))
+                .map(name => ({ name: name, count: state.history[name] }))
                 .sort((a, b) => b.count - a.count);
 
             let html = '';
@@ -1740,7 +1738,7 @@
                 let count = 0;
                 state.lastRoster.forEach(a => {
                     if (a.announcer) {
-                        state.history[a.announcer.id] = (state.history[a.announcer.id] || 0) + 1;
+                        state.history[a.announcer.name] = (state.history[a.announcer.name] || 0) + 1;
                         count++;
                     }
                 });
