@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Duty Roster — Akashvani Ambikapur</title>
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0e1a22" />
+    <link rel="icon" href="icon-192.png" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Duty Roster" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+        /* ── reset & base ── */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --ink: #0e1a22;
+            --panel: #122633;
+            --panel-2: #0c1a24;
+            --amber: #e8a33d;
+            --amber-dim: #c98a2c;
+            --teal: #2fa89f;
+            --teal-dim: #1f746e;
+            --paper: #f4ede0;
+            --paper-dim: #d8cdb6;
+            --danger: #d95d4a;
+            --line: rgba(244, 237, 224, 0.14);
+        }
+        body {
+            margin: 0;
+            background: radial-gradient(1200px 600px at 15% -10%, #16303f 0%, var(--ink) 55%), var(--ink);
+            color: var(--paper);
+            font-family: 'Inter', sans-serif;
+            padding-bottom: 60px;
+        }
+        header {
+            padding: 28px 20px 20px;
+            border-bottom: 1px solid var(--line);
+            position: relative;
+            overflow: hidden;
+        }
+        header::before {
+            content: "";
+            position: absolute;
+            right: -40px;
+            top: -40px;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(232, 163, 61, 0.25), transparent 70%);
+        }
+        .eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            color: var(--teal);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .eyebrow .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--amber);
+            box-shadow: 0 0 8px var(--amber);
+            animation: pulse 1.8s infinite;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1
+            }
+            50% {
+                opacity: .35
+            }
+        }
+        h1 {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 600;
+            letter-spacing: .01em;
+            font-size: clamp(26px, 4.5vw, 38px);
+            margin: 8px 0 4px;
+            color: var(--paper);
+        }
+        header p {
+            margin: 0;
+            color: var(--paper-dim);
+            font-size: 14px;
+            max-width: 760px;
+            line-height: 1.5;
+        }
+        main {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        section {
+            margin-top: 34px;
+        }
+        .section-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 13px;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--amber);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--line);
+        }
+        .section-sub {
+            color: var(--paper-dim);
+            font-size: 13px;
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 18px;
+        }
+        .row {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        label {
+            display: block;
+            font-size: 12px;
+            color: var(--paper-dim);
+            margin-bottom: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: .03em;
+        }
+        input[type="date"],
+        input[type="text"],
+        select {
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            color: var(--paper);
+            padding: 9px 11px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            width: 100%;
+            min-width: 160px;
+        }
+        input[type="checkbox"] {
+            accent-color: var(--amber);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .daychips {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .daychip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            cursor: pointer;
+            user-select: none;
+            transition: border-color .15s, color .15s;
+        }
+        .daychip.active {
+            border-color: var(--amber);
+            color: var(--amber);
+        }
+        button {
+            font-family: 'Oswald', sans-serif;
+            letter-spacing: .03em;
+            text-transform: uppercase;
+            font-size: 13px;
+            background: var(--amber);
+            color: #1a1206;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform .08s ease, background .15s ease;
+        }
+        button:hover {
+            background: #f0b158;
+        }
+        button:active {
+            transform: scale(.97);
+        }
+        button.ghost {
+            background: transparent;
+            color: var(--paper);
+            border: 1px solid var(--line);
+        }
+        button.ghost:hover {
+            border-color: var(--teal);
+            color: var(--teal);
+        }
+        button.danger {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid rgba(217, 93, 74, .4);
+            text-transform: none;
+            font-family: 'Inter';
+            font-size: 12px;
+            padding: 5px 10px;
+        }
+        button.danger:hover {
+            background: rgba(217, 93, 74, .12);
+        }
+        button.small {
+            padding: 6px 12px;
+            font-size: 11px;
+        }
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+            align-items: center;
+        }
+        /* ── grid table ── */
+        table.grid {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 12.5px;
+        }
+        .grid-scroll {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+        }
+        table.grid th,
+        table.grid td {
+            border: 1px solid var(--line);
+            padding: 6px 8px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        table.grid thead th {
+            background: var(--panel-2);
+            color: var(--teal);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        table.grid td.name-cell {
+            text-align: left;
+            font-weight: 600;
+            color: var(--paper);
+            background: var(--panel-2);
+            position: sticky;
+            left: 0;
+            z-index: 1;
+        }
+        .sabha-group {
+            border-left: 2px solid rgba(232, 163, 61, .35) !important;
+        }
+        /* ── parser box ── */
+        .parser-box {
+            margin-top: 16px;
+            border-top: 1px dashed var(--line);
+            padding-top: 16px;
+        }
+        textarea {
+            width: 100%;
+            min-height: 80px;
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            color: var(--paper);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            resize: vertical;
+        }
+        .parser-hint {
+            font-size: 11.5px;
+            color: var(--paper-dim);
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+        .parser-hint code {
+            background: var(--panel-2);
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: var(--amber);
+        }
+        /* ── roster table ── */
+        .roster-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 16px;
+            background: var(--panel);
+            font-size: 13px;
+        }
+        .roster-table th,
+        .roster-table td {
+            border: 1px solid var(--line);
+            padding: 10px 12px;
+            text-align: center;
+        }
+        .roster-table thead th {
+            background: var(--panel-2);
+            color: var(--amber);
+            font-family: 'Oswald', sans-serif;
+            text-transform: uppercase;
+            font-size: 11.5px;
+            letter-spacing: .06em;
+        }
+        .roster-table td.day-cell {
+            font-weight: 600;
+            color: var(--paper);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            text-align: left;
+        }
+        .roster-table td.assigned {
+            color: var(--paper);
+        }
+        .roster-table td.unfilled {
+            color: var(--danger);
+            font-style: italic;
+            background: rgba(217, 93, 74, .08);
+        }
+        .roster-table td.duty {
+            color: var(--teal);
+        }
+        /* ── stats ── */
+        .stat-strip {
+            display: flex;
+            gap: 24px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .stat {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--paper-dim);
+        }
+        .stat b {
+            color: var(--amber);
+            font-size: 15px;
+        }
+        /* ── footer ── */
+        footer {
+            margin-top: 50px;
+            padding: 20px;
+            text-align: center;
+            color: var(--paper-dim);
+            font-size: 11.5px;
+            border-top: 1px solid var(--line);
+        }
+        /* ── utilities ── */
+        .flex-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .mt-8 {
+            margin-top: 8px;
+        }
+        .text-muted {
+            color: var(--paper-dim);
+            font-size: 12px;
+        }
+        .w-auto {
+            width: auto;
+        }
+        .storage-badge {
+            display: inline-block;
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 2px 10px;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--teal);
+        }
+        /* ── toast ── */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--panel);
+            border: 1px solid var(--amber);
+            color: var(--paper);
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, .6);
+            z-index: 999;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity .25s, transform .25s;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        /* ── responsive ── */
+        @media(max-width:700px) {
+            .row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            input[type="date"],
+            input[type="text"] {
+                min-width: 100%;
+            }
+            .roster-table th,
+            .roster-table td {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+        }
+        /* ── hidden file input ── */
+        #importDataInput {
+            display: none;
+        }
+        .desig-select {
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            color: var(--paper);
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-size: 11px;
+            font-family: 'Inter', sans-serif;
+            width: 70px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══ HEADER ═══ -->
+    <header>
+        <div class="eyebrow"><span class="dot"></span> Prasar Bharati · Akashvani Ambikapur</div>
+        <h1>Weekly Duty Roster Generator</h1>
+        <p>Fill availability in the grid below — or paste WhatsApp messages to auto-populate. The tool assigns duties
+            fairly, avoiding conflicts, with a bias toward those who've had fewer duties in prior weeks.
+            <strong>Always verify the grid before generating.</strong></p>
+        <p style="font-size:11px;color:var(--paper-dim,#999);margin-top:4px;">Build: 2026-07-21 · priority-tiers-v1</p>
+    </header>
+
+    <main>
+
+        <!-- ═══ 1 · WEEK SETUP ═══ -->
+        <section>
+            <div class="section-title">1 · Week Setup</div>
+            <div class="card">
+                <div class="row">
+                    <div>
+                        <label>Week starting (Sunday)</label>
+                        <input type="date" id="weekStart" />
+                    </div>
+                    <div>
+                        <label>Phone‑in (Fourth Duty) days</label>
+                        <div class="daychips" id="phoneInDayChips"></div>
+                    </div>
+                    <div>
+                        <label>Fairness</label>
+                        <div class="daychip" id="fairnessToggle" style="cursor:pointer;">
+                            <input type="checkbox" id="fairnessCheck" checked style="pointer-events:none;" />
+                            Prioritise those with fewer duties in past weeks
+                        </div>
+                    </div>
+                    <div>
+                        <label>Availability priority</label>
+                        <div class="daychip" id="priorityToggle" style="cursor:pointer;">
+                            <input type="checkbox" id="priorityCheck" checked style="pointer-events:none;" />
+                            Prefer fully‑available announcers over restricted ones
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-8" style="align-items:center;">
+                    <span class="text-muted" style="font-size:12px;">📁 Data saved in your browser (localStorage).</span>
+                    <button class="ghost small" id="exportDataBtn">⬇ Export data</button>
+                    <button class="ghost small" id="importDataBtn">⬆ Import data</button>
+                    <input type="file" id="importDataInput" accept=".json" />
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ 2 · AVAILABILITY GRID ═══ -->
+        <section>
+            <div class="section-title">2 · Announcer Availability</div>
+            <div class="section-sub">
+                For each day and Sabha, tick the boxes where the announcer is available.
+                The <strong>Phone‑in (Fourth Duty)</strong> column indicates availability for the extra duty slot.
+                Data is auto‑saved to your browser.
+            </div>
+            <div class="card">
+                <div class="grid-scroll">
+                    <table class="grid" id="annTable">
+                        <thead><tr id="annHeadRow"></tr></thead>
+                        <tbody id="annBody"></tbody>
+                    </table>
+                </div>
+                <div class="toolbar">
+                    <button class="ghost" id="addRowBtn">+ Add announcer</button>
+                    <button class="ghost" id="clearAllBtn">Clear all</button>
+                    <span style="flex:1;"></span>
+                    <span class="text-muted" style="align-self:center;">Auto‑saved</span>
+                </div>
+
+                <!-- parser -->
+                <div class="parser-box">
+                    <label>Quick‑add: paste WhatsApp messages</label>
+                    <textarea id="pasteBox" placeholder="Paste messages like:&#10;[13/07, 22:57] +91 94064 58942: Available all sabhas&#10;[14/07, 02:59] +91 70000 68054: Available afternoon And phone in&#10;Gopesh Bhaiya: *24 July except* *first &amp; second* sabha available"></textarea>
+                    <div class="flex-row mt-8">
+                        <button id="parseAndAddBtn">Parse &amp; add</button>
+                        <button class="ghost small" id="parseReplaceBtn">Replace all</button>
+                        <span class="text-muted" style="font-size:12px;margin-left:6px;">Names &amp; designations extracted; edit grid after parsing.</span>
+                    </div>
+                    <div class="parser-hint">
+                        Recognises: <code>available</code>, <code>not available</code>, <code>morning</code> / <code>afternoon</code> / <code>evening</code>,
+                        <code>phone in</code>, <code>except</code> (day or date), <code>all sabhas</code>, and Hindi variants.
+                        Date mentions like <code>24 July</code> map to the correct weekday based on the week start.
+                        Always verify the grid — the parser is a best‑effort draft.
+                    </div>
+                    <details style="margin-top:10px;">
+                        <summary style="cursor:pointer;font-size:12px;color:#e8a33d;">🔍 Show parser debug log (what each message was read as)</summary>
+                        <pre id="parseDebugLog" style="white-space:pre-wrap;font-size:11px;line-height:1.5;background:rgba(0,0,0,.25);padding:8px;border-radius:6px;margin-top:6px;max-height:300px;overflow-y:auto;">Parse a message list to see the log here.</pre>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ 3 · GENERATE ═══ -->
+        <section>
+            <div class="section-title">3 · Generate Roster</div>
+            <div class="card">
+                <div class="toolbar">
+                    <button id="generateBtn">Generate Roster</button>
+                    <button class="ghost" id="regenBtn">Shuffle again</button>
+                    <button class="ghost" id="finalizeBtn">Finalise &amp; save to history</button>
+                    <button class="ghost" id="exportBtn">Export CSV</button>
+                </div>
+                <div class="stat-strip" id="statStrip"></div>
+                <div id="rosterOutput"></div>
+            </div>
+        </section>
+
+        <!-- ═══ 4 · HISTORY ═══ -->
+        <section>
+            <div class="section-title">4 · Duty History</div>
+            <div class="section-sub">Every week you click "Finalise" gets logged here. Use this to check fairness and to re-download any past week.</div>
+            <div class="card">
+                <div class="toolbar">
+                    <button class="ghost small" id="exportHistoryBtn">⬇ Export full history (CSV)</button>
+                    <button class="danger" id="clearHistoryBtn" style="text-transform:none;">Clear history</button>
+                </div>
+                <div id="historyPanel"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        Changes to this roster are not valid without approval from the competent authority.
+        This tool produces a draft assignment — review before publication.
+    </footer>
+
+    <!-- ═══ TOAST ═══ -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  CONSTANTS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const DAYS_HI = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
+        const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const SABHAS = [
+            { key: 's1', label: 'First Sabha', time: '05.00-12.20', hi: 'प्रथम सभा' },
+            { key: 's2', label: 'Second Sabha', time: '10.00-17.20', hi: 'द्वितीय सभा' },
+            { key: 's3', label: 'Third Sabha', time: '16.00-23.20', hi: 'तृतीय सभा' }
+        ];
+        const STORAGE_KEY = 'roster-tool-data-v3';
+        const DESIGNATIONS = ['सी.ए.', 'कैजुअल', 'पी.ए.', 'अन्य'];
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  STATE
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        let state = {
+            weekStart: null,
+            phoneInDays: [1],
+            fairness: true,
+            priorityMode: true,
+            announcers: [],
+            history: {},
+            rosterLog: [],
+            lastRoster: null
+        };
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  HELPERS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function uid() { return 'a-' + Math.random().toString(36).slice(2, 9) + '-' + Date.now().toString(36); }
+
+        function emptyAvail() {
+            const a = {};
+            for (let d = 0; d < 7; d++) a[d] = { s1: false, s2: false, s3: false };
+            return a;
+        }
+
+        function escapeHtml(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        function fmtDate(base, offset) {
+            const d = new Date(base);
+            d.setDate(d.getDate() + offset);
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function getWeekStartDate() {
+            const val = document.getElementById('weekStart').value;
+            return val ? new Date(val) : null;
+        }
+
+        function getDayIndexFromName(name) {
+            const map = {
+                'sunday': 0,
+                'monday': 1,
+                'tuesday': 2,
+                'wednesday': 3,
+                'thursday': 4,
+                'friday': 5,
+                'saturday': 6,
+                'रविवार': 0,
+                'सोमवार': 1,
+                'मंगलवार': 2,
+                'बुधवार': 3,
+                'गुरुवार': 4,
+                'शुक्रवार': 5,
+                'शनिवार': 6
+            };
+            const clean = name.toLowerCase().trim();
+            return clean in map ? map[clean] : -1;
+        }
+
+        function getDayOfWeekFromDate(dateStr, weekStart) {
+            if (!weekStart) return -1;
+            const parts = dateStr.trim().split(/\s+/);
+            let day = parseInt(parts[0]);
+            if (isNaN(day)) return -1;
+            let month = -1;
+            const monthMap = {
+                'january': 0,
+                'february': 1,
+                'march': 2,
+                'april': 3,
+                'may': 4,
+                'june': 5,
+                'july': 6,
+                'august': 7,
+                'september': 8,
+                'october': 9,
+                'november': 10,
+                'december': 11,
+                'jan': 0,
+                'feb': 1,
+                'mar': 2,
+                'apr': 3,
+                'jun': 5,
+                'jul': 6,
+                'aug': 7,
+                'sep': 8,
+                'oct': 9,
+                'nov': 10,
+                'dec': 11,
+                'जनवरी': 0,
+                'फ़रवरी': 1,
+                'मार्च': 2,
+                'अप्रैल': 3,
+                'मई': 4,
+                'जून': 5,
+                'जुलाई': 6,
+                'अगस्त': 7,
+                'सितम्बर': 8,
+                'अक्टूबर': 9,
+                'नवम्बर': 10,
+                'दिसम्बर': 11
+            };
+            if (parts.length >= 2) {
+                const m = parts[1].toLowerCase().replace(/[,.]/g, '');
+                if (m in monthMap) month = monthMap[m];
+            }
+            if (month === -1 && dateStr.includes('/')) {
+                const slash = dateStr.split('/');
+                if (slash.length >= 2) {
+                    const m = parseInt(slash[1]);
+                    if (m >= 1 && m <= 12) month = m - 1;
+                }
+            }
+            if (month === -1) return -1;
+            const year = weekStart.getFullYear();
+            const candidate = new Date(year, month, day);
+            if (candidate < weekStart) candidate.setFullYear(year + 1);
+            if (candidate - weekStart > 7 * 24 * 60 * 60 * 1000) candidate.setFullYear(year - 1);
+            const diff = Math.round((candidate - weekStart) / (24 * 60 * 60 * 1000));
+            if (diff >= 0 && diff < 7) return diff;
+            return -1;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  PERSISTENCE (localStorage)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function saveState() {
+            try {
+                const data = {
+                    weekStart: state.weekStart,
+                    phoneInDays: state.phoneInDays,
+                    fairness: state.fairness,
+                    priorityMode: state.priorityMode,
+                    announcers: state.announcers.map(a => ({
+                        id: a.id,
+                        name: a.name,
+                        designation: a.designation || 'सी.ए.',
+                        avail: a.avail,
+                        phoneIn: a.phoneIn
+                    })),
+                    history: state.history,
+                    rosterLog: state.rosterLog
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (e) { console.warn('Save failed', e); }
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return false;
+                const data = JSON.parse(raw);
+                state.weekStart = data.weekStart || null;
+                state.phoneInDays = data.phoneInDays || [1];
+                state.fairness = data.fairness !== undefined ? data.fairness : true;
+                state.priorityMode = data.priorityMode !== undefined ? data.priorityMode : true;
+                state.announcers = data.announcers || [];
+                state.history = data.history || {};
+                state.rosterLog = data.rosterLog || [];
+                state.announcers.forEach(a => {
+                    if (!a.avail) a.avail = emptyAvail();
+                    for (let d = 0; d < 7; d++) {
+                        if (!a.avail[d]) a.avail[d] = { s1: false, s2: false, s3: false };
+                    }
+                    if (a.phoneIn === undefined) a.phoneIn = false;
+                    if (!a.designation) a.designation = 'सी.ए.';
+                });
+                return true;
+            } catch (e) { console.warn('Load failed', e); return false; }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  TOAST
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        let toastTimer = null;
+
+        function toast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  RENDER: phone‑in chips
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderPhoneInChips() {
+            const box = document.getElementById('phoneInDayChips');
+            box.innerHTML = '';
+            DAYS.forEach((d, i) => {
+                const chip = document.createElement('div');
+                chip.className = 'daychip' + (state.phoneInDays.includes(i) ? ' active' : '');
+                chip.textContent = DAYS_SHORT[i];
+                chip.addEventListener('click', () => {
+                    if (state.phoneInDays.includes(i)) {
+                        state.phoneInDays = state.phoneInDays.filter(x => x !== i);
+                    } else {
+                        state.phoneInDays.push(i);
+                    }
+                    renderPhoneInChips();
+                    saveState();
+                });
+                box.appendChild(chip);
+            });
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  RENDER: availability grid
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderAnnTable() {
+            const head = document.getElementById('annHeadRow');
+            head.innerHTML = '<th style="position:sticky;left:0;z-index:2;">Announcer</th>' +
+                DAYS_SHORT.map(d => `<th colspan="3" class="sabha-group">${d}</th>`).join('') +
+                '<th>Fourth Duty</th><th>Desig.</th><th></th>';
+
+            const body = document.getElementById('annBody');
+            body.innerHTML = '';
+            const sub = document.createElement('tr');
+            sub.innerHTML = '<th style="position:sticky;left:0;"></th>' +
+                DAYS.map((_, di) => SABHAS.map((s, si) =>
+                    `<th class="${si===0?'sabha-group':''}" style="font-size:10px;font-weight:400;">${s.key.toUpperCase()}</th>`
+                ).join('')).join('') +
+                '<th></th><th></th><th></th>';
+            body.appendChild(sub);
+
+            state.announcers.forEach(ann => {
+                const tr = document.createElement('tr');
+                let cells =
+                    `<td class="name-cell"><input type="text" value="${escapeHtml(ann.name)}" data-id="${ann.id}" data-field="name" style="width:130px;background:transparent;border:none;color:var(--paper);font-weight:600;font-size:13px;"></td>`;
+                DAYS.forEach((_, di) => {
+                    SABHAS.forEach((s, si) => {
+                        const checked = ann.avail[di] && ann.avail[di][s.key] ? 'checked' : '';
+                        cells +=
+                            `<td class="${si===0?'sabha-group':''}"><input type="checkbox" ${checked} data-id="${ann.id}" data-day="${di}" data-sabha="${s.key}" class="avail-check"></td>`;
+                    });
+                });
+                const phoneChecked = ann.phoneIn ? 'checked' : '';
+                cells +=
+                    `<td><input type="checkbox" ${phoneChecked} data-id="${ann.id}" data-field="phoneIn" class="phonein-check"></td>`;
+                cells +=
+                    `<td><select class="desig-select" data-id="${ann.id}" data-field="designation">${DESIGNATIONS.map(d => `<option value="${d}" ${d===ann.designation?'selected':''}>${d}</option>`).join('')}</select></td>`;
+                cells += `<td><button class="danger" data-id="${ann.id}" data-action="remove">✕</button></td>`;
+                tr.innerHTML = cells;
+                body.appendChild(tr);
+            });
+
+            // event listeners
+            body.querySelectorAll('.avail-check').forEach(cb => {
+                cb.addEventListener('change', e => {
+                    const ann = state.announcers.find(a => a.id === e.target.dataset.id);
+                    if (ann) {
+                        const d = parseInt(e.target.dataset.day);
+                        const s = e.target.dataset.sabha;
+                        ann.avail[d][s] = e.target.checked;
+                        saveState();
+                    }
+                });
+            });
+            body.querySelectorAll('.phonein-check').forEach(cb => {
+                cb.addEventListener('change', e => {
+                    const ann = state.announcers.find(a => a.id === e.target.dataset.id);
+                    if (ann) {
+                        ann.phoneIn = e.target.checked;
+                        saveState();
+                    }
+                });
+            });
+            body.querySelectorAll('input[data-field="name"]').forEach(inp => {
+                const saveName = () => {
+                    const ann = state.announcers.find(a => a.id === inp.dataset.id);
+                    if (ann) {
+                        ann.name = inp.value.trim() || 'Unnamed';
+                        saveState();
+                    }
+                };
+                inp.addEventListener('change', saveName);
+                inp.addEventListener('blur', saveName);
+            });
+            body.querySelectorAll('select[data-field="designation"]').forEach(sel => {
+                sel.addEventListener('change', e => {
+                    const ann = state.announcers.find(a => a.id === e.target.dataset.id);
+                    if (ann) {
+                        ann.designation = e.target.value;
+                        saveState();
+                    }
+                });
+            });
+            body.querySelectorAll('[data-action="remove"]').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    state.announcers = state.announcers.filter(a => a.id !== e.target.dataset.id);
+                    renderAnnTable();
+                    saveState();
+                });
+            });
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  PARSER — WhatsApp messages (improved)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function parseMessages(text, weekStart) {
+            // Normalize to NFC first. WhatsApp/phone keyboards sometimes emit
+            // nukta letters (ड़, ढ़, फ़, etc.) as a single precomposed
+            // codepoint, while this file's own Devanagari regex literals are
+            // stored as the decomposed base-letter + nukta sequence. Those
+            // two forms look identical on screen but are different strings,
+            // so a regex like /छोड़कर/ silently fails to match "छोड़कर" typed
+            // with the other form — the except-marker check (and day-name /
+            // sabha-keyword checks) then falls through to the wrong branch.
+            // NFC canonicalizes both forms down to the same decomposed
+            // sequence that the source already uses, so do this once, up
+            // front, before any splitting or regex testing happens.
+            text = text.normalize('NFC');
+            // WhatsApp exports often wrap one message across multiple lines
+            // (no new "[dd/mm, hh:mm] name:" prefix on continuation lines).
+            // Merge those continuation lines into the message they belong to
+            // before parsing, otherwise each line gets parsed as if it were
+            // a separate, incomplete message.
+            const rawLines = text.split(/\n/);
+            const lines = [];
+            for (let rl of rawLines) {
+                rl = rl.trim();
+                if (!rl) continue;
+                const startsNewMessage = /^\[\d{2}\/\d{2},\s*\d{2}:\d{2}\]\s*.+?:/.test(rl);
+                if (startsNewMessage || lines.length === 0) {
+                    lines.push(rl);
+                } else {
+                    lines[lines.length - 1] += ' ' + rl;
+                }
+            }
+            const results = [];
+
+            for (let raw of lines) {
+                raw = raw.trim();
+                if (/^\[\d{2}\/\d{2},\s*\d{2}:\d{2}\]\s*$/.test(raw)) continue;
+
+                let name = '';
+                let body = raw;
+                let designation = 'सी.ए.';
+
+                // Try timestamp pattern: [dd/mm, hh:mm] name: message
+                const tsMatch = raw.match(/^\[\d{2}\/\d{2},\s*\d{2}:\d{2}\]\s*(.+?):\s*(.*)$/);
+                if (tsMatch) {
+                    name = tsMatch[1].trim();
+                    body = tsMatch[2].trim();
+                } else {
+                    const simpleMatch = raw.match(/^(.+?):\s*(.*)$/);
+                    if (simpleMatch) {
+                        name = simpleMatch[1].trim();
+                        body = simpleMatch[2].trim();
+                    } else {
+                        // No colon — use whole as body, try to extract phone number
+                        const phoneMatch = raw.match(/[\+]?[0-9]{10,13}/);
+                        if (phoneMatch) name = phoneMatch[0];
+                        else name = 'Unknown';
+                        body = raw;
+                    }
+                }
+
+                // If name is "." or "।", set to ". (Contact)"
+                if (name === '.' || name === '।') {
+                    name = '. (Contact)';
+                }
+
+                // Detect designation in body or name
+                if (/बी\.ए\.|B\.A\.|बीए|बी.ए|बीए/i.test(body) || /बी\.ए\.|B\.A\.|बीए|बी.ए|बीए/i.test(name)) {
+                    designation = 'सी.ए.';
+                } else if (/कैजुअल|Casual|कैज़ुअल/i.test(body) || /कैजुअल|Casual|कैज़ुअल/i.test(name)) {
+                    designation = 'कैजुअल';
+                } else if (/पी\.ए\.|P\.A\.|पीए|प्रोग्राम असिस्टेंट/i.test(body) || /पी\.ए\.|P\.A\.|पीए/i.test(name)) {
+                    designation = 'पी.ए.';
+                }
+
+                // Parse the body
+                const parsed = parseAvailabilityBody(body, weekStart);
+                results.push({
+                    name: name,
+                    designation: designation,
+                    avail: parsed.avail,
+                    phoneIn: parsed.phoneIn,
+                    debug: (name + ': ' + body + '\n   → ' + parsed.debug)
+                });
+            }
+            return results;
+        }
+
+        function parseAvailabilityBody(body, weekStart) {
+            body = body.normalize('NFC');
+            const avail = emptyAvail();
+            let phoneIn = false;
+            const DH = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+            // "not available" check
+            if (/not\s*available|available\s*not|उपलब्ध\s*नहीं/i.test(body)) {
+                return { avail, phoneIn, debug: 'not-available' };
+            }
+
+            // Phone-in
+            if (/phone\s*in|फोन\s*इन/i.test(body)) phoneIn = true;
+
+            const DAY_NAMES = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार',
+                'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'
+            ];
+
+            function detectSabhaKeys(text) {
+                const hasMorning = /morning|प्रात[ः:]|प्रात\s*काल|प्रातःकाल|pratah|पहली|प्रथम|first|s1/i.test(text);
+                const hasAfternoon = /afternoon|दोपहर|dopahar|द्वितीय|दूसरी|second|s2/i.test(text);
+                const hasEvening = /evening|शाम|सांध्य|सांध्यकाल|sandhya|तीसरी|तृतीय|third|s3/i.test(text);
+                // Only treat as "all sabhas" on an EXPLICIT all-sabha phrase.
+                // A message can legitimately end in a bare "उपलब्ध/available"
+                // right after naming one specific sabha (e.g. "...सभा के लिए
+                // उपलब्ध"), so that trailing word alone must not expand a
+                // single named session into all three.
+                const hasAllExplicit = /all\s*sabha|सभी\s*सभा|any\s*transmission|किसी\s*भी\s*सभा/i.test(text);
+                let keys = [];
+                if (hasAllExplicit) {
+                    keys = ['s1', 's2', 's3'];
+                } else {
+                    if (hasMorning) keys.push('s1');
+                    if (hasAfternoon) keys.push('s2');
+                    if (hasEvening) keys.push('s3');
+                }
+                return keys;
+            }
+
+            // Find explicit day references (day names, "X से Y" ranges, and
+            // numeric dates like "23/24", "19,20,21 जुलाई", or a bare "24")
+            // within a chunk of text. Returns an array of weekday indices
+            // (0=Sun..6=Sat).
+            function detectExplicitDays(text) {
+                const days = new Set();
+                const rangeRegex = new RegExp('(' + DAY_NAMES.join('|') + ')\\s*(?:से|to)\\s*(' + DAY_NAMES.join('|') + ')', 'i');
+                const rangeMatch = text.match(rangeRegex);
+                if (rangeMatch) {
+                    const i1 = getDayIndexFromName(rangeMatch[1].toLowerCase());
+                    const i2 = getDayIndexFromName(rangeMatch[2].toLowerCase());
+                    if (i1 >= 0 && i2 >= 0) {
+                        if (i1 <= i2) { for (let i = i1; i <= i2; i++) days.add(i); } else { for (let i = i1; i < 7; i++) days.add(i);
+                            for (let i = 0; i <= i2; i++) days.add(i); }
+                    }
+                } else {
+                    for (const dn of DAY_NAMES) {
+                        const re = new RegExp('(^|[^a-zA-Zऀ-ॿ])' + dn + '([^a-zA-Zऀ-ॿ]|$)', 'i');
+                        if (re.test(text)) {
+                            const idx = getDayIndexFromName(dn);
+                            if (idx >= 0) days.add(idx);
+                        }
+                    }
+                }
+
+                if (weekStart) {
+                    const monthNames = 'jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|जन|फ़र|मार्च|अप्रैल|मई|जून|जुलाई|अगस्त|सित|अक्टू|नव|दिस';
+                    let foundNumeric = false;
+                    // multi-number list, e.g. "23/24" or "19,20,21 जुलाई"
+                    const listRegex = new RegExp('((?:\\d{1,2}\\s*[,/]\\s*)+\\d{1,2})\\s*(?:' + monthNames + ')?', 'gi');
+                    let m;
+                    while ((m = listRegex.exec(text)) !== null) {
+                        const nums = m[1].split(/[,/]/).map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 31);
+                        for (const d of nums) {
+                            for (let i = 0; i < 7; i++) {
+                                if (parseInt(fmtDate(weekStart, i).split('/')[0]) === d) { days.add(i); foundNumeric = true; }
+                            }
+                        }
+                    }
+                    // single date + month, e.g. "24 जुलाई"
+                    if (!foundNumeric) {
+                        const singleRegex = new RegExp('(\\d{1,2})\\s*(?:' + monthNames + ')', 'i');
+                        const sm = text.match(singleRegex);
+                        if (sm) {
+                            const d = parseInt(sm[1]);
+                            for (let i = 0; i < 7; i++) {
+                                if (parseInt(fmtDate(weekStart, i).split('/')[0]) === d) { days.add(i); foundNumeric = true; }
+                            }
+                        }
+                    }
+                    // last resort: a bare 1-31 number with no day-name or
+                    // month attached at all, e.g. "except 24"
+                    if (!foundNumeric && days.size === 0) {
+                        const bareNums = text.match(/\d{1,2}/g) || [];
+                        for (const numStr of bareNums) {
+                            const d = parseInt(numStr);
+                            if (d >= 1 && d <= 31) {
+                                for (let i = 0; i < 7; i++) {
+                                    if (parseInt(fmtDate(weekStart, i).split('/')[0]) === d) days.add(i);
+                                }
+                            }
+                        }
+                    }
+                }
+                return Array.from(days);
+            }
+
+            // Isolate the clause that actually declares availability from any
+            // leading reason/context clause, e.g. "...I'll be out of station
+            // for NGO work, THEREFORE I'm available on..." — only the part
+            // after अत:/इसलिए/therefore should be scanned for dates, so an
+            // unrelated date mentioned as a reason (like a leave-start date)
+            // isn't mistaken for an available day.
+            let activeBody = body;
+            const reasonParts = body.split(/अत:|अतः|इसलिए|therefore|hence/i);
+            if (reasonParts.length > 1) activeBody = reasonParts[reasonParts.length - 1];
+
+            const hasExceptMarker = /except|छोड़कर/i.test(activeBody);
+
+            if (hasExceptMarker) {
+                // Pattern 1: exclude named days, available the rest of the week.
+                let excludeDays = detectExplicitDays(activeBody);
+                let sabhaKeys = detectSabhaKeys(activeBody);
+                if (sabhaKeys.length === 0 && /available|उपलब्ध/i.test(activeBody)) sabhaKeys = ['s1', 's2', 's3'];
+                if (sabhaKeys.length === 0) sabhaKeys = ['s1', 's2', 's3'];
+                for (let d = 0; d < 7; d++) {
+                    if (excludeDays.includes(d)) continue;
+                    for (const k of sabhaKeys) avail[d][k] = true;
+                }
+                const dbg = 'EXCEPT branch | activeBody="' + activeBody + '" | excludeDays=[' + excludeDays.map(d=>DH[d]).join(',') + '] | sabhaKeys=[' + sabhaKeys.join(',') + ']';
+                return { avail, phoneIn, debug: dbg };
+            }
+
+            // Look for a "remainder" clause: "बाकी दिन", "other days", etc.
+            // Everything before it names specific days; everything from it
+            // onward describes availability for every OTHER day.
+            const remainderRegex = /(बाकी\s*(?:सभी\s*)?दिन|शेष\s*दिन|other\s*days?|remaining\s*days?|rest\s*of\s*(?:the\s*)?days?)/i;
+            const remMatch = activeBody.match(remainderRegex);
+            const explicitPart = remMatch ? activeBody.slice(0, remMatch.index) : activeBody;
+            const remainderPart = remMatch ? activeBody.slice(remMatch.index) : '';
+
+            const explicitDays = detectExplicitDays(explicitPart);
+
+            if (explicitDays.length > 0) {
+                // Pattern 2/3: specific days named, no except-marker.
+                // Those named days get whatever sabha-set is stated for them.
+                let keys = detectSabhaKeys(explicitPart);
+                if (keys.length === 0) keys = ['s1', 's2', 's3'];
+                for (const d of explicitDays) {
+                    for (const k of keys) avail[d][k] = true;
+                }
+                let dbg = 'EXPLICIT-DAYS branch | explicitPart="' + explicitPart + '" | explicitDays=[' + explicitDays.map(d=>DH[d]).join(',') + '] | keys=[' + keys.join(',') + ']';
+                if (remainderPart) {
+                    // Pattern 2: a remainder clause covers every other day
+                    // with its own (possibly different) sabha-set.
+                    let remKeys = detectSabhaKeys(remainderPart);
+                    if (remKeys.length === 0) remKeys = ['s1', 's2', 's3'];
+                    for (let d = 0; d < 7; d++) {
+                        if (explicitDays.includes(d)) continue;
+                        for (const k of remKeys) avail[d][k] = true;
+                    }
+                    dbg += ' | remainderPart="' + remainderPart + '" | remKeys=[' + remKeys.join(',') + ']';
+                }
+                // Pattern 3: no remainder clause — the person is available
+                // ONLY on the named days; every other day stays unavailable
+                // (e.g. someone away for personal/NGO work the rest of the week).
+                return { avail, phoneIn, debug: dbg };
+            }
+
+            // No except-marker and no explicit day reference at all — applies
+            // to the whole week (e.g. "Available all sabhas", "उपलब्ध" alone).
+            let sabhaKeys = detectSabhaKeys(activeBody);
+            if (sabhaKeys.length === 0 && /available|उपलब्ध/i.test(activeBody)) sabhaKeys = ['s1', 's2', 's3'];
+            if (sabhaKeys.length === 0) sabhaKeys = ['s1', 's2', 's3'];
+            for (let d = 0; d < 7; d++) {
+                for (const k of sabhaKeys) avail[d][k] = true;
+            }
+
+            return { avail, phoneIn, debug: 'DEFAULT-ALL-WEEK branch | activeBody="' + activeBody + '" | sabhaKeys=[' + sabhaKeys.join(',') + ']' };
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  SOLVER
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function buildSlots() {
+            const slots = [];
+            for (let d = 0; d < 7; d++) {
+                SABHAS.forEach(s => slots.push({ day: d, type: 'sabha', sabha: s.key, label: s.hi }));
+            }
+            state.phoneInDays.forEach(d => slots.push({ day: d, type: 'phoneIn', label: 'Fourth Duty' }));
+            return slots;
+        }
+
+        function isEligible(ann, slot) {
+            if (slot.type === 'phoneIn') return !!ann.phoneIn;
+            return !!(ann.avail[slot.day] && ann.avail[slot.day][slot.sabha]);
+        }
+
+        // Classifies an announcer's WEEKLY availability pattern into 4 tiers,
+        // used to prefer less-conditional announcers when several people are
+        // eligible for the same slot:
+        //   1 = available every day, all 3 sabhas ("available for all duty")
+        //   2 = misses only 1-2 days entirely, but is fully available (all
+        //       3 sabhas) on every day they ARE available
+        //   3 = available every single day, but only for 1-2 sabhas each day
+        //   4 = anything more mixed/conditional than the above (specific
+        //       dates, different sabhas on different days, etc.)
+        function flexibilityTier(ann) {
+            let full = 0,
+                partial = 0,
+                none = 0;
+            for (let d = 0; d < 7; d++) {
+                const a = ann.avail[d] || { s1: false, s2: false, s3: false };
+                const count = (a.s1 ? 1 : 0) + (a.s2 ? 1 : 0) + (a.s3 ? 1 : 0);
+                if (count === 3) full++;
+                else if (count === 0) none++;
+                else partial++;
+            }
+            if (full === 7) return 1;
+            if (partial === 0 && none >= 1 && none <= 2) return 2;
+            if (none === 0 && full === 0) return 3;
+            return 4;
+        }
+
+        function shuffle(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function solveRoster() {
+            const slots = shuffle(buildSlots());
+            const pool = state.announcers.slice();
+            const usedThisWeek = new Set();
+            const assignment = [];
+            let remaining = slots.slice();
+
+            while (remaining.length > 0) {
+                let bestIdx = -1,
+                    bestCands = null;
+                remaining.forEach((slot, idx) => {
+                    const cands = pool.filter(a => !usedThisWeek.has(a.id) && isEligible(a, slot));
+                    if (bestCands === null || cands.length < bestCands.length) {
+                        bestCands = cands;
+                        bestIdx = idx;
+                    }
+                });
+                const slot = remaining[bestIdx];
+                remaining.splice(bestIdx, 1);
+
+                let cands = pool.filter(a => !usedThisWeek.has(a.id) && isEligible(a, slot));
+
+                function applyFairness(list) {
+                    if (list.length === 0) return [];
+                    if (!state.fairness) return shuffle(list);
+                    const sorted = list.slice().sort((a, b) => (state.history[a.name] || 0) - (state.history[b.name] || 0));
+                    const minLoad = state.history[sorted[0].name] || 0;
+                    const bucket = sorted.filter(a => (state.history[a.name] || 0) === minLoad);
+                    const rest = sorted.filter(a => (state.history[a.name] || 0) !== minLoad);
+                    return shuffle(bucket).concat(shuffle(rest));
+                }
+
+                if (state.priorityMode) {
+                    // Group eligible candidates by availability-flexibility
+                    // tier first (1 = fewest conditions .. 4 = most), then
+                    // apply fairness ordering within the best tier present.
+                    const byTier = { 1: [], 2: [], 3: [], 4: [] };
+                    cands.forEach(a => byTier[flexibilityTier(a)].push(a));
+                    cands = applyFairness(byTier[1]).concat(applyFairness(byTier[2]), applyFairness(byTier[3]), applyFairness(byTier[4]));
+                } else {
+                    cands = applyFairness(cands);
+                }
+
+                if (cands.length === 0) {
+                    assignment.push({ ...slot, announcer: null });
+                } else {
+                    const chosen = cands[0];
+                    usedThisWeek.add(chosen.id);
+                    assignment.push({ ...slot, announcer: chosen });
+                }
+            }
+            return assignment;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  RENDER ROSTER
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderRoster(assignment) {
+            state.lastRoster = assignment;
+            const base = getWeekStartDate();
+
+            let filled = 0,
+                total = 0;
+            assignment.forEach(a => { if (a.type === 'sabha') { total++; if (a.announcer) filled++; } });
+
+            document.getElementById('statStrip').innerHTML =
+                `<div class="stat"><b>${filled}/${total}</b> sabhas filled</div>` +
+                `<div class="stat"><b>${assignment.filter(a=>a.type==='phoneIn' && a.announcer).length}/${state.phoneInDays.length||0}</b> fourth duties filled</div>`;
+
+            let html =
+                `<table class="roster-table"><thead><tr><th>Day / Date</th>` +
+                SABHAS.map(s => `<th>${s.hi}<br><span style="opacity:.6;font-weight:400;">${s.time}</span></th>`).join(
+                '') +
+                `<th>चतुर्थ ड्यूटी<br><span style="opacity:.6;font-weight:400;">10.00-17.20</span></th></tr></thead><tbody>`;
+
+            function tierBadge(ann) {
+                if (!state.priorityMode) return '';
+                const t = flexibilityTier(ann);
+                const colors = { 1: '#2e7d32', 2: '#558b2f', 3: '#ef6c00', 4: '#c62828' };
+                return ` <span style="font-size:10px;font-weight:700;color:${colors[t]};border:1px solid ${colors[t]};border-radius:3px;padding:0 3px;">T${t}</span>`;
+            }
+
+            for (let d = 0; d < 7; d++) {
+                const dateStr = base ? fmtDate(base, d) : '';
+                html += `<tr><td class="day-cell">${DAYS_HI[d]}${dateStr ? '<br>'+dateStr : ''}</td>`;
+                SABHAS.forEach(s => {
+                    const slot = assignment.find(a => a.type === 'sabha' && a.day === d && a.sabha === s.key);
+                    if (slot && slot.announcer) {
+                        const desig = slot.announcer.designation || 'सी.ए.';
+                        html += `<td class="assigned">${escapeHtml(slot.announcer.name)}${tierBadge(slot.announcer)}<br><span style="font-size:11px;color:var(--paper-dim);">(${desig})</span></td>`;
+                    } else {
+                        html += `<td class="unfilled">—</td>`;
+                    }
+                });
+                const phoneSlot = assignment.find(a => a.type === 'phoneIn' && a.day === d);
+                if (phoneSlot && phoneSlot.announcer) {
+                    const desig = phoneSlot.announcer.designation || 'सी.ए.';
+                    html +=
+                        `<td class="duty">${escapeHtml(phoneSlot.announcer.name)}<br><span style="font-size:11px;color:var(--paper-dim);">(${desig})</span></td>`;
+                } else {
+                    html += `<td>—</td>`;
+                }
+                html += `</tr>`;
+            }
+            html += `</tbody></table>`;
+            if (state.priorityMode) {
+                html += `<p style="font-size:11px;color:var(--paper-dim);margin-top:6px;">` +
+                    `T1 = available all days & all sabhas &nbsp; T2 = misses 1–2 days only &nbsp; ` +
+                    `T3 = available all days but only 1–2 sabhas &nbsp; T4 = more conditional availability. ` +
+                    `Lower tiers are preferred first. These badges are for your own checking — they aren't printed on the CSV export.</p>`;
+            }
+            document.getElementById('rosterOutput').innerHTML = html;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  EXPORT CSV — exact match to picture
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function exportCSV() {
+            if (!state.lastRoster) { toast('Generate a roster first'); return; }
+            const base = getWeekStartDate();
+            if (!base) { toast('Select a week start date'); return; }
+
+            const startStr = fmtDate(base, 0);
+            const endStr = fmtDate(base, 6);
+
+            const rows = [];
+
+            // Header as per picture
+            rows.push(['प्रसार भारती']);
+            rows.push(['(भारत का लोक सेवा प्रसारक)']);
+            rows.push(['आकाशवाणी : अंबिकापुर']);
+            rows.push(['']);
+            rows.push([`प्रसारण निष्पादकों / उद्घोषकों की साप्ताहिक कार्य - तालिका दिनांक:- ${startStr} से ${endStr} तक`]);
+            rows.push(['']);
+
+            // Column headers
+            rows.push([
+                'दिन / दिनांक',
+                'प्रथम सभा (05.00-12.20)',
+                'द्वितीय सभा (10.00-17.20)',
+                'तृतीय सभा (16.00-23.20)',
+                'चतुर्थ ड्यूटी (10.00-17.20)'
+            ]);
+
+            // Data rows
+            for (let d = 0; d < 7; d++) {
+                const dateStr = fmtDate(base, d);
+                const row = [`${DAYS_HI[d]} ${dateStr}`];
+                SABHAS.forEach(s => {
+                    const slot = state.lastRoster.find(a => a.type === 'sabha' && a.day === d && a.sabha === s.key);
+                    if (slot && slot.announcer) {
+                        const desig = slot.announcer.designation || 'सी.ए.';
+                        row.push(`${slot.announcer.name} (${desig})`);
+                    } else {
+                        row.push('');
+                    }
+                });
+                const phoneSlot = state.lastRoster.find(a => a.type === 'phoneIn' && a.day === d);
+                if (phoneSlot && phoneSlot.announcer) {
+                    const desig = phoneSlot.announcer.designation || 'सी.ए.';
+                    row.push(`${phoneSlot.announcer.name} (${desig})`);
+                } else {
+                    row.push('');
+                }
+                rows.push(row);
+            }
+
+            // Notes and signature
+            rows.push(['']);
+            rows.push(['नोट :-']);
+            rows.push(['1. सक्षम अधिकारी के अनुमोदन के बिना उपर्युक्त कार्य तालिका में कोई परिवर्तन मान्य नहीं होगा।']);
+            rows.push(['2. ड्यूटी से पर्याप्त समय पूर्व शिफ्ट जाँच करवाना अनिवार्य है अन्यथा प्रतिबंधित किया जा सकता है।']);
+            rows.push(['']);
+            rows.push(['प्रतिलिपि :- कार्यक्रम प्रमुख / समन्वय / ड्यूटी रूम |']);
+            rows.push(['']);
+            rows.push(['[हस्ताक्षर]']);
+            rows.push(['सहायक निदेशक (कार्यक्रम)']);
+            rows.push(['कृते उप निदेशक']);
+
+            // Build CSV
+            const csv = rows.map(row =>
+                row.map(cell => {
+                    if (cell === undefined || cell === null) return '""';
+                    const str = String(cell);
+                    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                        return '"' + str.replace(/"/g, '""') + '"';
+                    }
+                    return str;
+                }).join(',')
+            ).join('\n');
+
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `duty-roster-${startStr}-to-${endStr}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast('CSV exported');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  DUTY HISTORY PANEL
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderHistoryPanel() {
+            const panel = document.getElementById('historyPanel');
+            if (!panel) return;
+
+            // ── total duty counts (keyed by name so counts survive re-parses) ──
+            const rows = Object.keys(state.history)
+                .map(name => ({ name: name, count: state.history[name] }))
+                .sort((a, b) => b.count - a.count);
+
+            let html = '';
+            if (rows.length === 0) {
+                html += '<p style="color:var(--paper-dim);font-size:13px;">No duties finalised yet. Once you click "Finalise & save to history", counts will appear here.</p>';
+            } else {
+                html += '<table class="grid" style="margin-bottom:18px;"><thead><tr><th>Announcer</th><th>Total duties (all time)</th></tr></thead><tbody>';
+                rows.forEach(r => {
+                    html += `<tr><td style="text-align:left;">${escapeHtml(r.name)}</td><td>${r.count}</td></tr>`;
+                });
+                html += '</tbody></table>';
+            }
+
+            // ── past finalised weeks, newest first ──
+            if (state.rosterLog.length === 0) {
+                html += '<p style="color:var(--paper-dim);font-size:13px;">No past weeks logged yet.</p>';
+            } else {
+                html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+                state.rosterLog.slice().reverse().forEach((week, i) => {
+                    const idx = state.rosterLog.length - 1 - i;
+                    const label = week.weekStart ? week.weekStart : '(no date set)';
+                    html += `
+                        <details style="background:var(--panel-2);border-radius:8px;padding:8px 12px;">
+                            <summary style="cursor:pointer;font-size:13px;">Week of ${label} — ${week.slots.filter(s=>s.name).length}/${week.slots.length} filled</summary>
+                            <table class="grid" style="margin-top:8px;">
+                                <thead><tr><th>Day</th><th>Duty</th><th>Assigned to</th></tr></thead>
+                                <tbody>
+                                    ${week.slots.map(s => `<tr><td>${DAYS_HI[s.day]}</td><td>${escapeHtml(s.label)}</td><td>${s.name ? escapeHtml(s.name) : '<em>unfilled</em>'}</td></tr>`).join('')}
+                                </tbody>
+                            </table>
+                            <div class="toolbar" style="margin-top:8px;">
+                                <button class="ghost small" data-week-idx="${idx}" onclick="exportSingleHistoryWeek(${idx})">⬇ Export this week (CSV)</button>
+                            </div>
+                        </details>`;
+                });
+                html += '</div>';
+            }
+
+            panel.innerHTML = html;
+        }
+
+        function weekToCSVRows(week) {
+            const rows = [];
+            rows.push([`Week of ${week.weekStart || ''}`]);
+            rows.push(['Day', 'Duty', 'Assigned to']);
+            week.slots.forEach(s => {
+                rows.push([DAYS_HI[s.day], s.label, s.name || 'UNFILLED']);
+            });
+            return rows;
+        }
+
+        function rowsToCSVBlob(rows) {
+            const csv = rows.map(row =>
+                row.map(cell => {
+                    if (cell === undefined || cell === null) return '""';
+                    const str = String(cell);
+                    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                        return '"' + str.replace(/"/g, '""') + '"';
+                    }
+                    return str;
+                }).join(',')
+            ).join('\n');
+            return new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        }
+
+        function exportSingleHistoryWeek(idx) {
+            const week = state.rosterLog[idx];
+            if (!week) return;
+            const blob = rowsToCSVBlob(weekToCSVRows(week));
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `duty-history-${week.weekStart || 'week'}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportHistoryCSV() {
+            if (state.rosterLog.length === 0) { toast('No history to export yet'); return; }
+            let rows = [];
+            state.rosterLog.forEach(week => {
+                rows = rows.concat(weekToCSVRows(week));
+                rows.push(['']);
+            });
+            const blob = rowsToCSVBlob(rows);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `duty-history-full-${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast('Full history exported');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  IMPORT / EXPORT DATA (JSON)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function exportData() {
+            const data = {
+                weekStart: state.weekStart,
+                phoneInDays: state.phoneInDays,
+                fairness: state.fairness,
+                priorityMode: state.priorityMode,
+                announcers: state.announcers.map(a => ({
+                    id: a.id,
+                    name: a.name,
+                    designation: a.designation || 'सी.ए.',
+                    avail: a.avail,
+                    phoneIn: a.phoneIn
+                })),
+                history: state.history,
+                rosterLog: state.rosterLog
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `roster-data-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast('Data exported');
+        }
+
+        function importData(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.announcers || !Array.isArray(data.announcers)) {
+                        toast('Invalid data file');
+                        return;
+                    }
+                    state.weekStart = data.weekStart || null;
+                    state.phoneInDays = data.phoneInDays || [1];
+                    state.fairness = data.fairness !== undefined ? data.fairness : true;
+                    state.priorityMode = data.priorityMode !== undefined ? data.priorityMode : true;
+                    state.announcers = data.announcers.map(a => ({
+                        ...a,
+                        avail: a.avail || emptyAvail(),
+                        designation: a.designation || 'सी.ए.'
+                    }));
+                    state.history = data.history || {};
+                    state.rosterLog = data.rosterLog || [];
+                    state.lastRoster = null;
+                    if (state.weekStart) document.getElementById('weekStart').value = state.weekStart;
+                    document.getElementById('fairnessCheck').checked = state.fairness;
+                    document.getElementById('priorityCheck').checked = state.priorityMode;
+                    renderAnnTable();
+                    renderPhoneInChips();
+                    document.getElementById('rosterOutput').innerHTML = '';
+                    document.getElementById('statStrip').innerHTML = '';
+                    renderHistoryPanel();
+                    saveState();
+                    toast('Data imported successfully');
+                } catch (err) {
+                    toast('Error importing data: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  EVENT BINDING
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        document.addEventListener('DOMContentLoaded', function() {
+
+            const loaded = loadState();
+            if (!loaded) {
+                state.announcers = seedAnnouncers();
+                saveState();
+            }
+
+            const today = new Date();
+            const nextSunday = new Date(today);
+            nextSunday.setDate(today.getDate() + ((7 - today.getDay()) % 7 || 7));
+            if (state.weekStart) {
+                document.getElementById('weekStart').value = state.weekStart;
+            } else {
+                document.getElementById('weekStart').value = nextSunday.toISOString().slice(0, 10);
+                state.weekStart = document.getElementById('weekStart').value;
+            }
+
+            document.getElementById('fairnessCheck').checked = state.fairness;
+            document.getElementById('priorityCheck').checked = state.priorityMode;
+            renderPhoneInChips();
+            renderHistoryPanel();
+
+            // ── week start change ──
+            document.getElementById('weekStart').addEventListener('change', function() {
+                state.weekStart = this.value;
+                saveState();
+            });
+
+            // ── fairness toggle ──
+            document.getElementById('fairnessToggle').addEventListener('click', function() {
+                state.fairness = !state.fairness;
+                document.getElementById('fairnessCheck').checked = state.fairness;
+                saveState();
+            });
+
+            // ── priority (availability-flexibility) toggle ──
+            document.getElementById('priorityToggle').addEventListener('click', function() {
+                state.priorityMode = !state.priorityMode;
+                document.getElementById('priorityCheck').checked = state.priorityMode;
+                saveState();
+            });
+
+            // ── add row ──
+            document.getElementById('addRowBtn').addEventListener('click', function() {
+                state.announcers.push({
+                    id: uid(),
+                    name: 'New announcer',
+                    designation: 'सी.ए.',
+                    avail: emptyAvail(),
+                    phoneIn: false
+                });
+                renderAnnTable();
+                saveState();
+                toast('Announcer added');
+            });
+
+            // ── clear all ──
+            let clearAllArmed = false;
+            let clearAllArmTimer = null;
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const clearAllBtnDefaultText = clearAllBtn.textContent;
+            clearAllBtn.addEventListener('click', function() {
+                if (!clearAllArmed) {
+                    clearAllArmed = true;
+                    clearAllBtn.textContent = 'Tap again to confirm';
+                    clearAllBtn.style.background = '#b33';
+                    clearAllBtn.style.color = '#fff';
+                    clearTimeout(clearAllArmTimer);
+                    clearAllArmTimer = setTimeout(() => {
+                        clearAllArmed = false;
+                        clearAllBtn.textContent = clearAllBtnDefaultText;
+                        clearAllBtn.style.background = '';
+                        clearAllBtn.style.color = '';
+                    }, 3000);
+                    return;
+                }
+                clearTimeout(clearAllArmTimer);
+                clearAllArmed = false;
+                clearAllBtn.textContent = clearAllBtnDefaultText;
+                clearAllBtn.style.background = '';
+                clearAllBtn.style.color = '';
+                state.announcers = [];
+                renderAnnTable();
+                saveState();
+                toast('All cleared');
+            });
+
+            // ── parse & add ──
+            document.getElementById('parseAndAddBtn').addEventListener('click', function() {
+                const text = document.getElementById('pasteBox').value;
+                if (!text.trim()) { toast('Paste some messages first'); return; }
+                const weekStart = getWeekStartDate();
+                const results = parseMessages(text, weekStart);
+                if (results.length === 0) { toast('No messages parsed'); return; }
+                let added = 0;
+                for (const r of results) {
+                    const existing = state.announcers.find(a => a.name === r.name);
+                    if (existing) {
+                        // A new message for the same name is their LATEST
+                        // stated availability, not an addition to whatever
+                        // was there before — so replace, don't OR-merge.
+                        // OR-merging could never clear a stale/incorrect
+                        // checkbox from old data; it could only add more.
+                        existing.avail = r.avail;
+                        existing.phoneIn = r.phoneIn;
+                        if (r.designation) existing.designation = r.designation;
+                    } else {
+                        state.announcers.push({
+                            id: uid(),
+                            name: r.name,
+                            designation: r.designation || 'सी.ए.',
+                            avail: r.avail,
+                            phoneIn: r.phoneIn
+                        });
+                    }
+                    added++;
+                }
+                const dbgEl = document.getElementById('parseDebugLog');
+                if (dbgEl) dbgEl.textContent = results.map(r => r.debug).join('\n\n');
+                renderAnnTable();
+                saveState();
+                toast(`Parsed ${added} announcers`);
+                document.getElementById('pasteBox').value = '';
+            });
+
+            // ── parse & replace ──
+            let replaceArmed = false;
+            let replaceArmTimer = null;
+            const parseReplaceBtn = document.getElementById('parseReplaceBtn');
+            const parseReplaceBtnDefaultText = parseReplaceBtn.textContent;
+            parseReplaceBtn.addEventListener('click', function() {
+                const text = document.getElementById('pasteBox').value;
+                if (!text.trim()) { toast('Paste some messages first'); return; }
+                if (!replaceArmed) {
+                    replaceArmed = true;
+                    parseReplaceBtn.textContent = 'Tap again to confirm';
+                    parseReplaceBtn.style.background = '#b33';
+                    parseReplaceBtn.style.color = '#fff';
+                    clearTimeout(replaceArmTimer);
+                    replaceArmTimer = setTimeout(() => {
+                        replaceArmed = false;
+                        parseReplaceBtn.textContent = parseReplaceBtnDefaultText;
+                        parseReplaceBtn.style.background = '';
+                        parseReplaceBtn.style.color = '';
+                    }, 3000);
+                    return;
+                }
+                clearTimeout(replaceArmTimer);
+                replaceArmed = false;
+                parseReplaceBtn.textContent = parseReplaceBtnDefaultText;
+                parseReplaceBtn.style.background = '';
+                parseReplaceBtn.style.color = '';
+                const weekStart = getWeekStartDate();
+                const results = parseMessages(text, weekStart);
+                if (results.length === 0) { toast('No messages parsed'); return; }
+                const byName = new Map();
+                for (const r of results) {
+                    byName.set(r.name, {
+                        id: uid(),
+                        name: r.name,
+                        designation: r.designation || 'सी.ए.',
+                        avail: r.avail,
+                        phoneIn: r.phoneIn
+                    });
+                }
+                state.announcers = Array.from(byName.values());
+                const dbgEl = document.getElementById('parseDebugLog');
+                if (dbgEl) dbgEl.textContent = results.map(r => r.debug).join('\n\n');
+                renderAnnTable();
+                saveState();
+                toast(`Replaced with ${state.announcers.length} announcers`);
+                document.getElementById('pasteBox').value = '';
+            });
+
+            // ── generate ──
+            document.getElementById('generateBtn').addEventListener('click', function() {
+                if (state.announcers.length === 0) { toast('Add announcers first'); return; }
+                const hasAvail = state.announcers.some(a => {
+                    for (let d = 0; d < 7; d++) {
+                        if (a.avail[d].s1 || a.avail[d].s2 || a.avail[d].s3) return true;
+                    }
+                    return a.phoneIn;
+                });
+                if (!hasAvail) { toast('No availability data — fill the grid first'); return; }
+                const roster = solveRoster();
+                renderRoster(roster);
+                toast('Roster generated');
+            });
+
+            // ── regen ──
+            document.getElementById('regenBtn').addEventListener('click', function() {
+                if (state.announcers.length === 0) { toast('Add announcers first'); return; }
+                const roster = solveRoster();
+                renderRoster(roster);
+                toast('Re-shuffled');
+            });
+
+            // ── finalise ──
+            document.getElementById('finalizeBtn').addEventListener('click', function() {
+                if (!state.lastRoster) { toast('Generate a roster first'); return; }
+                let count = 0;
+                state.lastRoster.forEach(a => {
+                    if (a.announcer) {
+                        state.history[a.announcer.name] = (state.history[a.announcer.name] || 0) + 1;
+                        count++;
+                    }
+                });
+                // Snapshot this week into the log (name only, so it still reads
+                // fine even if that announcer is later renamed or removed).
+                state.rosterLog.push({
+                    weekStart: state.weekStart,
+                    finalizedAt: new Date().toISOString(),
+                    slots: state.lastRoster.map(a => ({
+                        day: a.day,
+                        type: a.type,
+                        sabha: a.sabha || null,
+                        label: a.label,
+                        name: a.announcer ? a.announcer.name : null
+                    }))
+                });
+                // keep last 52 weeks (~1 year) so localStorage doesn't grow forever
+                if (state.rosterLog.length > 52) state.rosterLog = state.rosterLog.slice(-52);
+                saveState();
+                renderHistoryPanel();
+                toast(`Finalised ${count} duties (saved to history)`);
+            });
+
+            document.getElementById('exportHistoryBtn').addEventListener('click', exportHistoryCSV);
+            document.getElementById('clearHistoryBtn').addEventListener('click', function() {
+                if (!confirm('Clear all duty history and fairness counts? This cannot be undone.')) return;
+                state.history = {};
+                state.rosterLog = [];
+                saveState();
+                renderHistoryPanel();
+                toast('History cleared');
+            });
+
+            // ── export CSV ──
+            document.getElementById('exportBtn').addEventListener('click', exportCSV);
+
+            // ── export data ──
+            document.getElementById('exportDataBtn').addEventListener('click', exportData);
+
+            // ── import data ──
+            document.getElementById('importDataBtn').addEventListener('click', function() {
+                document.getElementById('importDataInput').click();
+            });
+            document.getElementById('importDataInput').addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    importData(e.target.files[0]);
+                    e.target.value = '';
+                }
+            });
+
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  SEED DATA
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function seedAnnouncers() {
+            const list = [
+                { name: '+91 94064 58942', desig: 'सी.ए.', avail: allAvail(), phoneIn: true },
+                { name: '+91 70000 68054', desig: 'सी.ए.', avail: sabhaOnly(['s2']), phoneIn: true },
+                { name: '+91 98261 52960', desig: 'सी.ए.', avail: sabhaOnly(['s3']), phoneIn: false },
+                { name: '+91 98263 86144', desig: 'सी.ए.', avail: allAvail(), phoneIn: true },
+                { name: '+91 83589 11002', desig: 'सी.ए.', avail: allAvail(), phoneIn: false },
+                { name: '+91 95757 82986', desig: 'सी.ए.', avail: allAvail(), phoneIn: false },
+                { name: '+91 94242 50810', desig: 'सी.ए.', avail: sabhaOnly(['s3']), phoneIn: false },
+                { name: '+91 98261 10746', desig: 'सी.ए.', avail: (() => { const a = emptyAvail(); for (let d = 0; d <
+                        7; d++) { if (d === 4 || d === 5) a[d].s3 = true;
+                        else { a[d].s2 = true;
+                            a[d].s3 = true; } } return a; })(), phoneIn: false },
+                { name: '+91 89598 30000', desig: 'सी.ए.', avail: sabhaOnly(['s1']), phoneIn: false },
+                { name: 'Gopesh Bhaiya', desig: 'सी.ए.', avail: sabhaOnly(['s1', 's2'], [5]), phoneIn: false },
+                { name: '+91 84610 43066', desig: 'सी.ए.', avail: (() => { const a = emptyAvail();
+                        a[0] = { s1: true, s2: true, s3: true }; for (let d = 1; d < 7; d++) a[d].s3 = true; return a;
+                    })(), phoneIn: false },
+                { name: '+91 98264 42557', desig: 'सी.ए.', avail: sabhaOnly(['s3']), phoneIn: false },
+                { name: '+91 82694 10184', desig: 'सी.ए.', avail: allAvail(), phoneIn: false },
+                { name: '+91 88156 51210', desig: 'सी.ए.', avail: allAvail(), phoneIn: false },
+                { name: 'Jiaan', desig: 'सी.ए.', avail: sabhaOnly(['s1'], [6]), phoneIn: true },
+                { name: '+91 79995 12122', desig: 'सी.ए.', avail: sabhaOnly(['s2', 's3']), phoneIn: true },
+                { name: '+91 84318 42728', desig: 'सी.ए.', avail: sabhaOnly(['s2', 's3']), phoneIn: false },
+                { name: '+91 83191 10042', desig: 'सी.ए.', avail: sabhaOnly(['s2'], [5]), phoneIn: false },
+                { name: '+91 97536 48459', desig: 'सी.ए.', avail: sabhaOnly(['s2'], [6]), phoneIn: false },
+                { name: '+91 70247 71274', desig: 'सी.ए.', avail: sabhaOnly(['s1'], [6]), phoneIn: false },
+                { name: '. (Contact)', desig: 'सी.ए.', avail: sabhaOnly(['s1'], [6]), phoneIn: false },
+                { name: '+91 98261 09260', desig: 'सी.ए.', avail: emptyAvail(), phoneIn: false },
+                { name: '+91 62657 89872', desig: 'सी.ए.', avail: allAvail(), phoneIn: false },
+                { name: '+91 93402 93241', desig: 'सी.ए.', avail: allAvail(), phoneIn: false },
+                { name: '+91 81209 23631', desig: 'सी.ए.', avail: sabhaOnly(['s1']), phoneIn: false },
+                { name: '+91 95823 84824', desig: 'सी.ए.', avail: (() => { const a = emptyAvail();
+                        [0, 1, 2].forEach(d => { a[d] = { s1: true, s2: true, s3: true }; }); return a; })(),
+                    phoneIn: false },
+                { name: 'Karan Sidhu', desig: 'सी.ए.', avail: emptyAvail(), phoneIn: false },
+                { name: '+91 80855 53980', desig: 'सी.ए.', avail: sabhaOnly(['s3']), phoneIn: false },
+            ];
+            return list.map(x => ({ id: uid(), name: x.name, designation: x.desig, avail: x.avail, phoneIn: x
+                    .phoneIn }));
+        }
+
+        function allAvail() {
+            const a = emptyAvail();
+            for (let d = 0; d < 7; d++) a[d] = { s1: true, s2: true, s3: true };
+            return a;
+        }
+
+        function sabhaOnly(keys, exceptDays) {
+            const a = emptyAvail();
+            for (let d = 0; d < 7; d++) {
+                if (exceptDays && exceptDays.includes(d)) continue;
+                keys.forEach(k => a[d][k] = true);
+            }
+            return a;
+        }
+
+        // ── PWA: register service worker (only works when hosted on a server,
+        // not when opened as a local file:// — that's fine, it just skips) ──
+        if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('service-worker.js').catch(function () {});
+            });
+        }
+    </script>
+
+</body>
+</html>
