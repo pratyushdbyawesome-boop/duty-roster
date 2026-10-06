@@ -129,6 +129,15 @@
             margin-bottom: 14px;
             line-height: 1.5;
         }
+        .muted { color: var(--paper-dim); }
+        #oaPanels h4 {
+            color: var(--amber);
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: .03em;
+            font-weight: 600;
+            margin: 0;
+        }
         .card {
             background: var(--panel);
             border: 1px solid var(--line);
@@ -150,7 +159,9 @@
             letter-spacing: .03em;
         }
         input[type="date"],
+        input[type="datetime-local"],
         input[type="text"],
+        input[type="password"],
         select {
             background: var(--panel-2);
             border: 1px solid var(--line);
@@ -435,7 +446,9 @@
                 align-items: stretch;
             }
             input[type="date"],
-            input[type="text"] {
+            input[type="datetime-local"],
+            input[type="text"],
+            input[type="password"] {
                 min-width: 100%;
             }
             .roster-table th,
@@ -469,7 +482,7 @@
         <p>Fill availability in the grid below — or paste WhatsApp messages to auto-populate. The tool assigns duties
             fairly, avoiding conflicts, with a bias toward those who've had fewer duties in prior weeks.
             <strong>Always verify the grid before generating.</strong></p>
-        <p style="font-size:11px;color:var(--paper-dim,#999);margin-top:4px;">Build: 2026-09-23 · weighted-duty-balance-v1 + short-format-v1 + duty-chart-v1 + download-fix-v1 + priority-tier-daymajor-v1 + render-on-load-fix-v1 + datepicker-fix-v1 + dedupe-match-fix-v1 + blank-start-v1 + legacy-demo-cleanup-v1 + whatsapp-web-paste-fix-v1 + phonein-first-fix-v1 + ios-bidi-mark-strip-fix-v1 + ios-export-timestamp-fix-v1 + auto-update-sw-v1 + update-banner-optin-v1 + legacy-cleanup-onetime-fix-v1</p>
+        <p style="font-size:11px;color:var(--paper-dim,#999);margin-top:4px;">Build: 2026-10-06 · weighted-duty-balance-v1 + short-format-v1 + duty-chart-v1 + download-fix-v1 + priority-tier-daymajor-v1 + render-on-load-fix-v1 + datepicker-fix-v1 + dedupe-match-fix-v1 + blank-start-v1 + legacy-demo-cleanup-v1 + whatsapp-web-paste-fix-v1 + phonein-first-fix-v1 + ios-bidi-mark-strip-fix-v1 + ios-export-timestamp-fix-v1 + auto-update-sw-v1 + update-banner-optin-v1 + legacy-cleanup-onetime-fix-v1 + online-availability-collection-v1</p>
     </header>
 
     <main>
@@ -641,6 +654,66 @@
                 </div>
                 <div id="dcStatus" style="margin-top:10px;font-size:13px;color:var(--paper-dim);"></div>
                 <div id="dcPreview" style="margin-top:14px;"></div>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-title">6 · Online Availability Collection</div>
+            <div class="section-sub">An alternative to pasting WhatsApp messages: give each announcer their own login to <code>login.html</code>, open a window for a specific week, and fetch their locked-in answers straight into the table below once everyone has submitted.</div>
+            <div class="card">
+                <div class="row" style="align-items:center; flex-wrap:wrap; gap:8px;">
+                    <input type="text" id="oaServerUrl" placeholder="Server URL, e.g. https://your-roster.vercel.app" style="flex:1; min-width:220px;" />
+                    <input type="password" id="oaAdminPin" placeholder="Admin PIN" style="width:120px;" />
+                    <button class="ghost small" id="oaConnectBtn">Connect</button>
+                    <button class="ghost small" id="oaDisconnectBtn" style="display:none;">Disconnect</button>
+                </div>
+                <div class="muted" id="oaStatus" style="margin-top:8px; font-size:12px;">🌐 Not connected.</div>
+
+                <div id="oaPanels" style="display:none; margin-top:18px;">
+
+                    <!-- Announcer accounts -->
+                    <h4 style="margin-bottom:6px;">Announcer accounts</h4>
+                    <div id="oaAccountsTableWrap"></div>
+                    <div class="row" style="margin-top:10px; flex-wrap:wrap; gap:8px; align-items:flex-end;">
+                        <div><label>Username</label><input type="text" id="oaNewUsername" style="width:130px;"></div>
+                        <div><label>Password</label><input type="password" id="oaNewPassword" style="width:130px;"></div>
+                        <div><label>Display name</label><input type="text" id="oaNewDisplayName" style="width:160px;"></div>
+                        <div>
+                            <label>Designation</label>
+                            <select id="oaNewDesignation" style="width:120px;"></select>
+                        </div>
+                        <button id="oaAddAccountBtn">+ Add account</button>
+                    </div>
+
+                    <!-- Availability window -->
+                    <h4 style="margin:22px 0 6px 0;">Availability request</h4>
+                    <div id="oaCurrentWindow" class="muted" style="font-size:12.5px; margin-bottom:10px;"></div>
+                    <div class="row" style="flex-wrap:wrap; gap:10px; align-items:flex-end;">
+                        <div>
+                            <label>Week starting (Sunday)</label>
+                            <input type="date" id="oaFromDate">
+                        </div>
+                        <div>
+                            <label>Submit by (deadline)</label>
+                            <input type="datetime-local" id="oaDeadline">
+                        </div>
+                        <div style="flex:1; min-width:160px;">
+                            <label>Label (optional)</label>
+                            <input type="text" id="oaLabel" placeholder="e.g. Week of 5 Oct">
+                        </div>
+                        <button id="oaOpenWindowBtn">Open new window</button>
+                    </div>
+                    <div class="muted" style="font-size:11.5px; margin-top:6px;">Opening a new window resets every announcer back to unlocked/blank for that new week — last week's answers stay safely out of the way, they're just no longer the active one.</div>
+
+                    <!-- Status + fetch -->
+                    <h4 style="margin:22px 0 6px 0;">Submission status</h4>
+                    <div id="oaStatusTableWrap"></div>
+                    <div class="toolbar" style="margin-top:12px;">
+                        <button id="oaRefreshStatusBtn" class="ghost">🔄 Refresh status</button>
+                        <button id="oaFetchBtn">⬇ Fetch locked-in availability into table above</button>
+                    </div>
+                    <div id="oaFetchResult" class="muted" style="margin-top:8px; font-size:12.5px;"></div>
+                </div>
             </div>
         </section>
 
@@ -2094,6 +2167,302 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  SECTION 6 · ONLINE AVAILABILITY COLLECTION
+        //  A second way to gather availability, alongside the WhatsApp
+        //  paste box above: each announcer gets their own login to a
+        //  separate page (login.html), fills in a checklist, and locks it
+        //  in. This section talks to a small Vercel + Redis backend (see
+        //  /api and /VERCEL.md) to manage accounts, open a dated window for
+        //  submissions, check who has locked in, and pull everyone's locked
+        //  answers straight into the announcer table above.
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const OA_URL_KEY = 'oa-server-url';
+        const OA_PIN_KEY = 'oa-admin-pin';
+        let oaLatestFetch = null; // last result of GET /api/fetch-all, kept only so the status table can redraw without a round trip — never used by the Fetch button itself, which always asks the server fresh
+
+        function oaConfig() {
+            const url = (localStorage.getItem(OA_URL_KEY) || '').trim().replace(/\/$/, '');
+            const pin = localStorage.getItem(OA_PIN_KEY) || '';
+            return { url, pin, enabled: !!(url && pin) };
+        }
+
+        async function oaApi(path, method, body, extraHeaders) {
+            const cfg = oaConfig();
+            const headers = Object.assign({ 'Content-Type': 'application/json' }, extraHeaders || {});
+            const res = await fetch(cfg.url + path, {
+                method: method || 'GET',
+                headers,
+                body: body !== undefined ? JSON.stringify(body) : undefined
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+            return data;
+        }
+
+        function oaAdminHeaders() {
+            return { 'x-sync-pin': oaConfig().pin };
+        }
+
+        function oaSetStatus(text, isError) {
+            const el = document.getElementById('oaStatus');
+            el.textContent = text;
+            el.style.color = isError ? 'var(--danger)' : '';
+        }
+
+        async function oaConnect() {
+            const url = document.getElementById('oaServerUrl').value.trim().replace(/\/$/, '');
+            const pin = document.getElementById('oaAdminPin').value.trim();
+            if (!url || !pin) { toast('Enter both a server URL and the admin PIN'); return; }
+            localStorage.setItem(OA_URL_KEY, url);
+            localStorage.setItem(OA_PIN_KEY, pin);
+            try {
+                await oaApi('/api/accounts', 'GET', undefined, oaAdminHeaders());
+                document.getElementById('oaConnectBtn').style.display = 'none';
+                document.getElementById('oaDisconnectBtn').style.display = '';
+                document.getElementById('oaServerUrl').disabled = true;
+                document.getElementById('oaAdminPin').disabled = true;
+                document.getElementById('oaPanels').style.display = '';
+                oaSetStatus('🟢 Connected to ' + url);
+                await oaRefreshAll();
+            } catch (e) {
+                localStorage.removeItem(OA_URL_KEY);
+                localStorage.removeItem(OA_PIN_KEY);
+                oaSetStatus('Could not connect: ' + e.message, true);
+            }
+        }
+
+        function oaDisconnect() {
+            localStorage.removeItem(OA_URL_KEY);
+            localStorage.removeItem(OA_PIN_KEY);
+            document.getElementById('oaConnectBtn').style.display = '';
+            document.getElementById('oaDisconnectBtn').style.display = 'none';
+            document.getElementById('oaServerUrl').disabled = false;
+            document.getElementById('oaAdminPin').disabled = false;
+            document.getElementById('oaServerUrl').value = '';
+            document.getElementById('oaAdminPin').value = '';
+            document.getElementById('oaPanels').style.display = 'none';
+            oaSetStatus('🌐 Not connected.');
+        }
+
+        async function oaRefreshAll() {
+            await oaRefreshAccounts();
+            await oaRefreshWindow();
+            await oaRefreshStatus();
+        }
+
+        async function oaRefreshAccounts() {
+            try {
+                const data = await oaApi('/api/accounts', 'GET', undefined, oaAdminHeaders());
+                const wrap = document.getElementById('oaAccountsTableWrap');
+                if (data.accounts.length === 0) {
+                    wrap.innerHTML = '<div class="muted" style="font-size:12.5px;">No announcer accounts yet — add one below.</div>';
+                    return;
+                }
+                let html = '<table class="grid"><thead><tr><th>Username</th><th>Display name</th><th>Designation</th><th></th></tr></thead><tbody>';
+                data.accounts.forEach((a) => {
+                    html += '<tr><td>' + escapeHtml(a.username) + '</td><td>' + escapeHtml(a.displayName) + '</td><td>' + escapeHtml(a.designation) + '</td>' +
+                        '<td><button class="ghost small" data-remove-account="' + escapeHtml(a.username) + '">Remove</button></td></tr>';
+                });
+                html += '</tbody></table>';
+                wrap.innerHTML = html;
+                wrap.querySelectorAll('[data-remove-account]').forEach((btn) => {
+                    btn.addEventListener('click', async function () {
+                        const username = this.getAttribute('data-remove-account');
+                        if (!confirm('Remove the account "' + username + '"? They will no longer be able to log in.')) return;
+                        try {
+                            await oaApi('/api/accounts', 'DELETE', { username }, oaAdminHeaders());
+                            await oaRefreshAccounts();
+                            await oaRefreshStatus();
+                        } catch (e) { toast('Failed: ' + e.message); }
+                    });
+                });
+            } catch (e) {
+                toast('Could not load accounts: ' + e.message);
+            }
+        }
+
+        async function oaAddAccount() {
+            const username = document.getElementById('oaNewUsername').value.trim();
+            const password = document.getElementById('oaNewPassword').value;
+            const displayName = document.getElementById('oaNewDisplayName').value.trim();
+            const designation = document.getElementById('oaNewDesignation').value;
+            if (!username || !password) { toast('Username and password are required'); return; }
+            try {
+                await oaApi('/api/accounts', 'POST', { username, password, displayName, designation }, oaAdminHeaders());
+                document.getElementById('oaNewUsername').value = '';
+                document.getElementById('oaNewPassword').value = '';
+                document.getElementById('oaNewDisplayName').value = '';
+                await oaRefreshAccounts();
+                await oaRefreshStatus();
+                toast('Account added');
+            } catch (e) {
+                toast('Could not add account: ' + e.message);
+            }
+        }
+
+        async function oaRefreshWindow() {
+            try {
+                const data = await oaApi('/api/window', 'GET');
+                const el = document.getElementById('oaCurrentWindow');
+                if (!data.window) {
+                    el.textContent = 'No availability request is currently open.';
+                } else {
+                    const w = data.window;
+                    el.innerHTML = 'Currently open: <strong>' + escapeHtml(w.label || 'Untitled') + '</strong> — ' +
+                        escapeHtml(w.fromDate) + ' to ' + escapeHtml(w.toDate) + ', submit by ' + escapeHtml(new Date(w.deadline).toLocaleString());
+                }
+            } catch (e) {
+                toast('Could not load window: ' + e.message);
+            }
+        }
+
+        async function oaOpenWindow() {
+            const fromDate = document.getElementById('oaFromDate').value;
+            const deadlineLocal = document.getElementById('oaDeadline').value;
+            const label = document.getElementById('oaLabel').value.trim();
+            if (!fromDate || !deadlineLocal) { toast('Pick a week-start date and a deadline'); return; }
+            const toDate = (function () {
+                const d = new Date(fromDate + 'T00:00:00');
+                d.setDate(d.getDate() + 6);
+                return d.toISOString().slice(0, 10);
+            })();
+            if (!confirm('Open a new availability window for ' + fromDate + ' to ' + toDate + '?\n\nThis resets every announcer back to unlocked/blank for this new week.')) return;
+            try {
+                await oaApi('/api/window', 'POST', {
+                    fromDate, toDate,
+                    deadline: new Date(deadlineLocal).toISOString(),
+                    label
+                }, oaAdminHeaders());
+                await oaRefreshWindow();
+                await oaRefreshStatus();
+                toast('New availability window opened');
+            } catch (e) {
+                toast('Could not open window: ' + e.message);
+            }
+        }
+
+        async function oaRefreshStatus() {
+            try {
+                const data = await oaApi('/api/fetch-all', 'GET', undefined, oaAdminHeaders());
+                oaLatestFetch = data;
+                const wrap = document.getElementById('oaStatusTableWrap');
+                if (data.people.length === 0) {
+                    wrap.innerHTML = '<div class="muted" style="font-size:12.5px;">No announcer accounts yet.</div>';
+                    return;
+                }
+                let html = '<table class="grid"><thead><tr><th>Announcer</th><th>Status</th><th></th></tr></thead><tbody>';
+                data.people.forEach((p) => {
+                    let statusHtml, unlockBtn = '';
+                    if (!data.window) {
+                        statusHtml = '<span class="muted">No window open</span>';
+                    } else if (!p.submission) {
+                        statusHtml = '<span style="color:var(--paper-dim);">Not started</span>';
+                    } else if (p.submission.locked) {
+                        statusHtml = '<span style="color:var(--ok,#4caf7d);">🔒 Locked in</span>';
+                        unlockBtn = '<button class="ghost small" data-unlock="' + escapeHtml(p.username) + '">Unlock</button>';
+                    } else {
+                        statusHtml = '<span style="color:var(--amber);">✏️ Draft saved, not locked</span>';
+                    }
+                    html += '<tr><td>' + escapeHtml(p.displayName) + '</td><td>' + statusHtml + '</td><td>' + unlockBtn + '</td></tr>';
+                });
+                html += '</tbody></table>';
+                wrap.innerHTML = html;
+                wrap.querySelectorAll('[data-unlock]').forEach((btn) => {
+                    btn.addEventListener('click', async function () {
+                        const username = this.getAttribute('data-unlock');
+                        try {
+                            await oaApi('/api/submission', 'PATCH', { username }, oaAdminHeaders());
+                            await oaRefreshStatus();
+                            toast('Unlocked — they can edit and re-lock now');
+                        } catch (e) { toast('Failed: ' + e.message); }
+                    });
+                });
+            } catch (e) {
+                toast('Could not load status: ' + e.message);
+            }
+        }
+
+        function oaSubmissionToAvail(submissionAvail) {
+            // The server stores day keys 0..6 the same way this app does,
+            // but JSON round-trips object keys as strings — normalize back.
+            const a = emptyAvail();
+            for (let d = 0; d < 7; d++) {
+                const src = submissionAvail[d] || submissionAvail[String(d)];
+                if (src) a[d] = { s1: !!src.s1, s2: !!src.s2, s3: !!src.s3 };
+            }
+            return a;
+        }
+
+        async function oaFetchIntoRoster() {
+            try {
+                // Always pull fresh from the server here — never reuse
+                // oaLatestFetch (that cache is only for redrawing the status
+                // table quickly). Fetching is the one action that actually
+                // changes the roster, so it must reflect whatever the truth
+                // is on the server AT THIS MOMENT, not whatever it was the
+                // last time the status table happened to be refreshed.
+                const data = await oaApi('/api/fetch-all', 'GET', undefined, oaAdminHeaders());
+                oaLatestFetch = data;
+                if (!data.window) { toast('No availability window is open'); return; }
+                const locked = data.people.filter((p) => p.submission && p.submission.locked);
+                if (locked.length === 0) {
+                    document.getElementById('oaFetchResult').textContent = 'Nobody has a locked-in answer right now — nothing was changed in the table above.';
+                    toast('Nobody has locked in their availability yet');
+                    return;
+                }
+
+                let updated = 0, added = 0;
+                locked.forEach((p) => {
+                    const key = normalizeNameForMatch(p.displayName);
+                    const existing = state.announcers.find((a) => normalizeNameForMatch(a.name) === key);
+                    const avail = oaSubmissionToAvail(p.submission.avail);
+                    const phoneIn = !!p.submission.phoneIn;
+                    if (existing) {
+                        existing.avail = avail;
+                        existing.phoneIn = phoneIn;
+                        existing.designation = p.designation || existing.designation;
+                        updated++;
+                    } else {
+                        state.announcers.push({
+                            id: uid(),
+                            name: p.displayName,
+                            designation: p.designation || 'सी.ए.',
+                            avail,
+                            phoneIn
+                        });
+                        added++;
+                    }
+                });
+                renderAnnTable();
+                saveState();
+                const skipped = data.people.length - locked.length;
+                document.getElementById('oaFetchResult').textContent =
+                    'Fetched ' + locked.length + ' locked-in answer(s): ' + updated + ' updated, ' + added + ' added.' +
+                    (skipped > 0 ? ' (' + skipped + ' not locked yet, skipped.)' : '');
+                toast('Fetched into announcer table — ' + updated + ' updated, ' + added + ' added');
+            } catch (e) {
+                toast('Fetch failed: ' + e.message);
+            }
+        }
+
+        function oaInit() {
+            const cfg = oaConfig();
+            const designationSelect = document.getElementById('oaNewDesignation');
+            designationSelect.innerHTML = DESIGNATIONS.map((d) => '<option value="' + escapeHtml(d) + '">' + escapeHtml(d) + '</option>').join('');
+            if (cfg.enabled) {
+                document.getElementById('oaServerUrl').value = cfg.url;
+                document.getElementById('oaAdminPin').value = cfg.pin;
+                document.getElementById('oaConnectBtn').style.display = 'none';
+                document.getElementById('oaDisconnectBtn').style.display = '';
+                document.getElementById('oaServerUrl').disabled = true;
+                document.getElementById('oaAdminPin').disabled = true;
+                document.getElementById('oaPanels').style.display = '';
+                oaSetStatus('🟢 Connected to ' + cfg.url);
+                oaRefreshAll();
+            }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  EVENT BINDING
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         document.addEventListener('DOMContentLoaded', function() {
@@ -2412,6 +2781,15 @@
                     e.target.value = '';
                 }
             });
+
+            // ── online availability collection (Section 6) ──
+            document.getElementById('oaConnectBtn').addEventListener('click', oaConnect);
+            document.getElementById('oaDisconnectBtn').addEventListener('click', oaDisconnect);
+            document.getElementById('oaAddAccountBtn').addEventListener('click', oaAddAccount);
+            document.getElementById('oaOpenWindowBtn').addEventListener('click', oaOpenWindow);
+            document.getElementById('oaRefreshStatusBtn').addEventListener('click', oaRefreshStatus);
+            document.getElementById('oaFetchBtn').addEventListener('click', oaFetchIntoRoster);
+            oaInit();
 
         });
 

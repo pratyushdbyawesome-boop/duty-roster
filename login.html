@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Availability Portal — Duty Roster</title>
+<link rel="icon" href="data:,">
+<style>
+    :root {
+        --ink: #0e1a22;
+        --panel: #122633;
+        --panel-2: #0c1a24;
+        --amber: #e8a33d;
+        --amber-dim: #c98a2c;
+        --teal: #2fa89f;
+        --teal-dim: #1f746e;
+        --paper: #f4ede0;
+        --paper-dim: #d8cdb6;
+        --danger: #d95d4a;
+        --ok: #4caf7d;
+        --line: rgba(244, 237, 224, 0.14);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+        margin: 0;
+        background: radial-gradient(1200px 600px at 15% -10%, #16303f 0%, var(--ink) 55%), var(--ink);
+        color: var(--paper);
+        font-family: 'Inter', -apple-system, sans-serif;
+        padding: env(safe-area-inset-top, 0px) 14px calc(env(safe-area-inset-bottom, 0px) + 24px) 14px;
+        min-height: 100%;
+    }
+    header {
+        padding: 18px 2px 14px 2px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 18px;
+    }
+    header h1 { font-size: 18px; margin: 0 0 2px 0; color: var(--paper); }
+    header p { font-size: 12px; color: var(--paper-dim); margin: 0; }
+    .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 18px;
+        max-width: 480px;
+        margin: 0 auto 16px auto;
+    }
+    label { display: block; font-size: 12px; color: var(--paper-dim); margin: 10px 0 4px 0; }
+    input[type="text"], input[type="password"] {
+        width: 100%;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        color: var(--paper);
+        padding: 10px 11px;
+        border-radius: 6px;
+        font-size: 15px;
+        font-family: inherit;
+    }
+    button {
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        border: none;
+        border-radius: 7px;
+        padding: 11px 16px;
+        cursor: pointer;
+    }
+    .btn-primary { background: var(--amber); color: #1a1205; width: 100%; margin-top: 14px; }
+    .btn-primary:disabled { opacity: 0.5; cursor: default; }
+    .btn-ghost { background: transparent; border: 1px solid var(--line); color: var(--paper); }
+    .btn-danger { background: var(--danger); color: #250c07; }
+    .error-msg { color: var(--danger); font-size: 12.5px; margin-top: 10px; min-height: 1em; }
+    .muted { color: var(--paper-dim); font-size: 12.5px; }
+    .window-banner {
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin-bottom: 14px;
+        font-size: 13px;
+    }
+    .window-banner .label { color: var(--amber); font-weight: 600; margin-bottom: 4px; }
+    table.grid { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12.5px; }
+    table.grid th, table.grid td { border: 1px solid var(--line); text-align: center; padding: 7px 2px; }
+    table.grid th { color: var(--paper-dim); font-weight: 500; font-size: 11px; }
+    table.grid td.sabha-label { text-align: left; color: var(--paper-dim); padding-left: 8px; white-space: nowrap; }
+    input[type="checkbox"] { width: 19px; height: 19px; accent-color: var(--amber); }
+    .phonein-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+        padding: 10px 12px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        border-radius: 7px;
+    }
+    .lock-row { display: flex; gap: 10px; margin-top: 16px; }
+    .locked-banner {
+        background: rgba(76,175,125,0.12);
+        border: 1px solid var(--ok);
+        border-radius: 8px;
+        padding: 14px;
+        text-align: center;
+    }
+    .locked-banner .big { font-size: 28px; margin-bottom: 6px; }
+    .save-status { font-size: 11.5px; color: var(--paper-dim); text-align: right; margin-top: 6px; min-height: 1.4em; }
+    .logout-link { text-align: center; margin-top: 18px; }
+    .logout-link a { color: var(--paper-dim); font-size: 12.5px; text-decoration: underline; cursor: pointer; }
+    .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>📋 Availability Portal</h1>
+    <p>Mark which sabhas you're available for, then lock it in.</p>
+</header>
+
+<div id="loginView" class="card">
+    <label for="loginUsername">Username</label>
+    <input type="text" id="loginUsername" autocomplete="username" />
+    <label for="loginPassword">Password</label>
+    <input type="password" id="loginPassword" autocomplete="current-password" />
+    <button class="btn-primary" id="loginBtn">Log in</button>
+    <div class="error-msg" id="loginError"></div>
+</div>
+
+<div id="appView" class="hidden">
+
+    <div class="card" id="noWindowCard" style="display:none; text-align:center;">
+        <div class="muted">No availability request is open right now.<br>Check back once the admin opens one.</div>
+    </div>
+
+    <div class="card" id="formCard" style="display:none;">
+        <div class="window-banner">
+            <div class="label" id="windowLabel"></div>
+            <div id="windowDates"></div>
+            <div class="muted" id="windowDeadline" style="margin-top:4px;"></div>
+        </div>
+
+        <div id="lockedView" class="locked-banner hidden">
+            <div class="big">🔒</div>
+            <div><strong>Your availability is locked in.</strong></div>
+            <div class="muted" style="margin-top:6px;">If you need to change something, ask the admin to unlock it for you.</div>
+        </div>
+
+        <div id="editView">
+            <table class="grid" id="availGrid"></table>
+
+            <div class="phonein-row">
+                <input type="checkbox" id="phoneInCheck" />
+                <label for="phoneInCheck" style="margin:0; color:var(--paper);">I'm available for Fourth Duty (phone-in) this week</label>
+            </div>
+
+            <div class="save-status" id="saveStatus">&nbsp;</div>
+
+            <div class="lock-row">
+                <button class="btn-primary" id="lockBtn" style="margin-top:0;">🔒 Lock my availability</button>
+            </div>
+            <div class="muted" style="margin-top:8px;">Locking is final — you won't be able to change it yourself afterward. Double-check before locking.</div>
+        </div>
+    </div>
+
+    <div class="logout-link"><a id="logoutBtn">Log out</a></div>
+</div>
+
+<script>
+    const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const SABHAS = [
+        { key: 's1', label: 'Morning' },
+        { key: 's2', label: 'Afternoon' },
+        { key: 's3', label: 'Evening' }
+    ];
+    const API_BASE = ''; // same-origin — this page must be opened via the deployed URL, not as a local file
+
+    function emptyAvail() {
+        const a = {};
+        for (let d = 0; d < 7; d++) a[d] = { s1: false, s2: false, s3: false };
+        return a;
+    }
+
+    let currentWindow = null;
+    let currentSubmission = null;
+    let saveTimer = null;
+
+    function creds() {
+        return {
+            username: localStorage.getItem('portal-username') || '',
+            password: localStorage.getItem('portal-password') || ''
+        };
+    }
+
+    async function api(path, method, body, extraHeaders) {
+        const headers = Object.assign({ 'Content-Type': 'application/json' }, extraHeaders || {});
+        const res = await fetch(API_BASE + path, {
+            method: method || 'GET',
+            headers,
+            body: body ? JSON.stringify(body) : undefined
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+        return data;
+    }
+
+    function authHeaders() {
+        const c = creds();
+        return { 'x-username': c.username, 'x-password': c.password };
+    }
+
+    function fmtDate(iso) {
+        if (!iso) return '';
+        const d = new Date(iso + 'T00:00:00');
+        return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+
+    function addDays(iso, n) {
+        const d = new Date(iso + 'T00:00:00');
+        d.setDate(d.getDate() + n);
+        return d.toISOString().slice(0, 10);
+    }
+
+    function fmtDeadline(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        const now = new Date();
+        const diffMs = d - now;
+        const base = 'Submit by ' + d.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+        if (diffMs <= 0) return base + ' — deadline has passed';
+        const hrs = Math.floor(diffMs / 3600000);
+        if (hrs < 48) return base + ' (' + hrs + 'h left)';
+        return base + ' (' + Math.floor(hrs / 24) + ' days left)';
+    }
+
+    function buildGrid(avail) {
+        const table = document.getElementById('availGrid');
+        let html = '<tr><th></th>';
+        for (let d = 0; d < 7; d++) {
+            const dateStr = currentWindow ? fmtDate(addDays(currentWindow.fromDate, d)) : DAY_LABELS[d];
+            html += '<th>' + dateStr + '</th>';
+        }
+        html += '</tr>';
+        SABHAS.forEach((s) => {
+            html += '<tr><td class="sabha-label">' + s.label + '</td>';
+            for (let d = 0; d < 7; d++) {
+                const checked = avail[d] && avail[d][s.key] ? 'checked' : '';
+                html += '<td><input type="checkbox" data-day="' + d + '" data-sabha="' + s.key + '" ' + checked + ' /></td>';
+            }
+            html += '</tr>';
+        });
+        table.innerHTML = html;
+        table.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+            cb.addEventListener('change', onFormChanged);
+        });
+    }
+
+    function readGridIntoAvail() {
+        const avail = emptyAvail();
+        document.querySelectorAll('#availGrid input[type="checkbox"]').forEach((cb) => {
+            const d = parseInt(cb.getAttribute('data-day'), 10);
+            const s = cb.getAttribute('data-sabha');
+            avail[d][s] = cb.checked;
+        });
+        return avail;
+    }
+
+    function onFormChanged() {
+        document.getElementById('saveStatus').textContent = 'Saving…';
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveDraft, 500);
+    }
+
+    async function saveDraft() {
+        try {
+            const avail = readGridIntoAvail();
+            const phoneIn = document.getElementById('phoneInCheck').checked;
+            await api('/api/submission', 'POST', { avail, phoneIn }, authHeaders());
+            document.getElementById('saveStatus').textContent = 'Saved ✓ (' + new Date().toLocaleTimeString() + ')';
+        } catch (e) {
+            document.getElementById('saveStatus').textContent = 'Could not save: ' + e.message;
+        }
+    }
+
+    async function lockIt() {
+        if (!confirm('Lock in your availability? You will not be able to change it yourself after this — the admin would need to unlock it for you.')) return;
+        try {
+            const avail = readGridIntoAvail();
+            const phoneIn = document.getElementById('phoneInCheck').checked;
+            await api('/api/submission', 'PUT', { avail, phoneIn }, authHeaders());
+            await loadSubmission();
+        } catch (e) {
+            alert('Could not lock: ' + e.message);
+        }
+    }
+
+    async function loadSubmission() {
+        const data = await api('/api/submission', 'GET', null, authHeaders());
+        currentWindow = data.window;
+        currentSubmission = data.submission;
+        render();
+    }
+
+    function render() {
+        document.getElementById('noWindowCard').style.display = currentWindow ? 'none' : 'block';
+        document.getElementById('formCard').style.display = currentWindow ? 'block' : 'none';
+        if (!currentWindow) return;
+
+        document.getElementById('windowLabel').textContent = currentWindow.label || 'Availability needed';
+        document.getElementById('windowDates').textContent =
+            fmtDate(currentWindow.fromDate) + ' → ' + fmtDate(addDays(currentWindow.fromDate, 6));
+        document.getElementById('windowDeadline').textContent = fmtDeadline(currentWindow.deadline);
+
+        const locked = currentSubmission && currentSubmission.locked;
+        document.getElementById('lockedView').classList.toggle('hidden', !locked);
+        document.getElementById('editView').classList.toggle('hidden', !!locked);
+
+        if (!locked) {
+            buildGrid(currentSubmission ? currentSubmission.avail : emptyAvail());
+            document.getElementById('phoneInCheck').checked = !!(currentSubmission && currentSubmission.phoneIn);
+        }
+    }
+
+    async function doLogin() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const errEl = document.getElementById('loginError');
+        errEl.textContent = '';
+        if (!username || !password) { errEl.textContent = 'Enter both username and password'; return; }
+        localStorage.setItem('portal-username', username);
+        localStorage.setItem('portal-password', password);
+        try {
+            await loadSubmission();
+            document.getElementById('loginView').classList.add('hidden');
+            document.getElementById('appView').classList.remove('hidden');
+        } catch (e) {
+            localStorage.removeItem('portal-username');
+            localStorage.removeItem('portal-password');
+            errEl.textContent = e.message;
+        }
+    }
+
+    function doLogout() {
+        localStorage.removeItem('portal-username');
+        localStorage.removeItem('portal-password');
+        document.getElementById('appView').classList.add('hidden');
+        document.getElementById('loginView').classList.remove('hidden');
+        document.getElementById('loginUsername').value = '';
+        document.getElementById('loginPassword').value = '';
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', doLogin);
+    document.getElementById('loginPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('lockBtn').addEventListener('click', lockIt);
+    document.getElementById('logoutBtn').addEventListener('click', doLogout);
+
+    // Auto-login if credentials are already remembered on this device.
+    (async function init() {
+        const c = creds();
+        if (c.username && c.password) {
+            try {
+                await loadSubmission();
+                document.getElementById('loginView').classList.add('hidden');
+                document.getElementById('appView').classList.remove('hidden');
+            } catch (e) {
+                localStorage.removeItem('portal-username');
+                localStorage.removeItem('portal-password');
+            }
+        }
+    })();
+</script>
+
+</body>
+</html>

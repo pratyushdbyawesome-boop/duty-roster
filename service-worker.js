@@ -22,10 +22,11 @@
 // reloads automatically the moment a new one takes control — so a person
 // using the app doesn't have to do anything for an update to reach them.
 
-const CACHE_NAME = 'duty-roster-cache-v7'; // ← bump this on every real deploy
+const CACHE_NAME = 'duty-roster-cache-v8'; // ← bump this on every real deploy
 const PRECACHE_URLS = [
     './',
     './index.html',
+    './login.html',
     './manifest.json',
     './icon-192.png',
     './icon-512.png'
