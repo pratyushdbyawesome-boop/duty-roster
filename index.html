@@ -471,9 +471,31 @@
             font-family: 'Inter', sans-serif;
             width: 70px;
         }
+        body.locked > *:not(#gate):not(#toast):not(script) { display: none !important; }
+        #gate { display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 20px; }
+        body.locked #gate { display: flex; }
+        #gate .gate-box { width: 100%; max-width: 340px; background: var(--card, #162a36); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 22px; }
+        #gate h2 { margin: 0 0 6px; font-family: 'Oswald', sans-serif; }
+        #gate input { width: 100%; box-sizing: border-box; margin: 6px 0 10px; }
+        #gateErr { color: var(--danger, #ff6b6b); font-size: 12.5px; min-height: 16px; }
+        #syncBadge { display: none; position: fixed; right: 10px; bottom: 10px; z-index: 9000; max-width: 300px; padding: 7px 11px; border-radius: 8px; font: 12px 'Inter', sans-serif; cursor: pointer; background: #22343f; color: #e8eef2; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+        #syncBadge.sync-ok { background: #1f4d36; } #syncBadge.sync-warn { background: #e8a33d; color: #1a1a1a; } #syncBadge.sync-err { background: #a32d2d; color: #fff; }
     </style>
 </head>
-<body>
+<body class="locked">
+
+    <!-- ═══ PIN GATE: nothing else is shown or loaded until the PIN is verified by the server ═══ -->
+    <div id="gate">
+        <div class="gate-box">
+            <h2>🔒 Duty Roster</h2>
+            <div class="muted" style="font-size:12.5px;">Enter the admin PIN to continue.</div>
+            <input type="password" id="gatePin" placeholder="Admin PIN" autocomplete="current-password" />
+            <input type="text" id="gateUrl" placeholder="Server URL (leave as is if unsure)" />
+            <button id="gateBtn" style="width:100%;">Unlock</button>
+            <div id="gateErr"></div>
+        </div>
+    </div>
+    <div id="syncBadge"></div>
 
     <!-- ═══ HEADER ═══ -->
     <header>
@@ -770,6 +792,12 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  HELPERS
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Local calendar date as YYYY-MM-DD (NOT toISOString(), which shifts to UTC and
+        // gives the previous day in zones ahead of UTC such as IST).
+        function localISODate(d) {
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        }
+
         function uid() { return 'a-' + Math.random().toString(36).slice(2, 9) + '-' + Date.now().toString(36); }
 
         // WhatsApp exports can show the same person differently between
@@ -900,52 +928,155 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  PERSISTENCE (localStorage)
+        //  PERSISTENCE — server (Redis, via /api/roster-data) is the source
+        //  of truth; localStorage is only an offline cache/fallback.
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        function saveState() {
-            try {
-                const data = {
-                    weekStart: state.weekStart,
-                    phoneInDays: state.phoneInDays,
-                    balanceDuties: state.balanceDuties,
-                    priorityMode: state.priorityMode,
-                    announcers: state.announcers.map(a => ({
-                        id: a.id,
-                        name: a.name,
-                        designation: a.designation || 'सी.ए.',
-                        avail: a.avail,
-                        phoneIn: a.phoneIn
-                    })),
-                    history: state.history,
-                    rosterLog: state.rosterLog
-                };
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            } catch (e) { console.warn('Save failed', e); }
+        const SYNC_DEBOUNCE_MS = 1200;
+        const sync = { ready: false, dirty: false, inFlight: false, timer: null, retryTimer: null, failed: false };
+
+        function buildSaveData() {
+            return {
+                weekStart: state.weekStart,
+                phoneInDays: state.phoneInDays,
+                balanceDuties: state.balanceDuties,
+                priorityMode: state.priorityMode,
+                announcers: state.announcers.map(a => ({
+                    id: a.id,
+                    name: a.name,
+                    designation: a.designation || 'सी.ए.',
+                    avail: a.avail,
+                    phoneIn: a.phoneIn
+                })),
+                history: state.history,
+                rosterLog: state.rosterLog
+            };
         }
 
-        function loadState() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (!raw) return false;
-                const data = JSON.parse(raw);
-                state.weekStart = data.weekStart || null;
-                state.phoneInDays = data.phoneInDays || [1];
-                state.balanceDuties = data.balanceDuties !== undefined ? data.balanceDuties : true;
-                state.priorityMode = data.priorityMode !== undefined ? data.priorityMode : true;
-                state.announcers = data.announcers || [];
-                state.history = data.history || {};
-                state.rosterLog = data.rosterLog || [];
-                state.announcers.forEach(a => {
-                    if (!a.avail) a.avail = emptyAvail();
-                    for (let d = 0; d < 7; d++) {
-                        if (!a.avail[d]) a.avail[d] = { s1: false, s2: false, s3: false };
-                    }
-                    if (a.phoneIn === undefined) a.phoneIn = false;
-                    if (!a.designation) a.designation = 'सी.ए.';
-                });
-                return true;
-            } catch (e) { console.warn('Load failed', e); return false; }
+        function setSyncBadge(kind, text) {
+            const el = document.getElementById('syncBadge');
+            if (!el) return;
+            el.className = 'sync-' + kind;
+            el.textContent = text;
+            el.style.display = text ? 'block' : 'none';
         }
+
+        function saveState() {
+            const data = buildSaveData();
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) { console.warn('Local save failed', e); }
+            sync.dirty = true;
+            if (!sync.ready) { setSyncBadge('warn', '⚠ Not synced — changes are only on this device. Tap to retry.'); return; }
+            setSyncBadge('busy', '⏳ Saving…');
+            clearTimeout(sync.timer);
+            sync.timer = setTimeout(flushSync, SYNC_DEBOUNCE_MS);
+        }
+
+        async function flushSync(opts) {
+            clearTimeout(sync.timer);
+            if (!sync.ready || !sync.dirty) return;
+            if (sync.inFlight) { sync.timer = setTimeout(flushSync, 400); return; }
+            sync.inFlight = true;
+            const snapshot = JSON.stringify(buildSaveData());
+            sync.dirty = false; // anything saved while this is in flight sets it true again
+            try {
+                const res = await fetch(oaConfig().url + '/api/roster-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-sync-pin': oaConfig().pin },
+                    body: '{"data":' + snapshot + '}',
+                    keepalive: !!(opts && opts.keepalive) && snapshot.length < 60000
+                });
+                const out = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(out.error || ('HTTP ' + res.status));
+                sync.failed = false;
+                if (!sync.dirty) setSyncBadge('ok', '✓ Synced');
+                else { setSyncBadge('busy', '⏳ Saving…'); sync.timer = setTimeout(flushSync, SYNC_DEBOUNCE_MS); }
+                setTimeout(() => { if (!sync.dirty && !sync.failed) setSyncBadge('ok', ''); }, 2500);
+            } catch (e) {
+                sync.dirty = true;
+                if (!sync.failed) toast('⚠ Could not sync to server: ' + e.message + ' — will retry');
+                sync.failed = true;
+                setSyncBadge('err', '⚠ NOT SYNCED — ' + e.message + '. Saved on this device only; retrying. Tap to retry now.');
+                clearTimeout(sync.retryTimer);
+                sync.retryTimer = setTimeout(flushSync, 15000);
+            } finally {
+                sync.inFlight = false;
+            }
+        }
+
+        function applyLoadedData(data) {
+            state.weekStart = data.weekStart || null;
+            state.phoneInDays = data.phoneInDays || [1];
+            state.balanceDuties = data.balanceDuties !== undefined ? data.balanceDuties : true;
+            state.priorityMode = data.priorityMode !== undefined ? data.priorityMode : true;
+            state.announcers = data.announcers || [];
+            state.history = data.history || {};
+            state.rosterLog = data.rosterLog || [];
+            state.announcers.forEach(a => {
+                if (!a.avail) a.avail = emptyAvail();
+                for (let d = 0; d < 7; d++) {
+                    if (!a.avail[d]) a.avail[d] = { s1: false, s2: false, s3: false };
+                }
+                if (a.phoneIn === undefined) a.phoneIn = false;
+                if (!a.designation) a.designation = 'सी.ए.';
+            });
+        }
+
+        function readLocalCache() {
+            try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+        }
+
+        // Returns true if any saved data was loaded. Server wins when reachable.
+        async function loadState() {
+            const local = readLocalCache();
+            let server;
+            try {
+                server = await oaApi('/api/roster-data', 'GET', undefined, oaAdminHeaders());
+            } catch (e) {
+                // Server unreachable: work from the local cache, but DON'T push to the server
+                // (we can't know what's there) until a retry succeeds.
+                if (local) applyLoadedData(local);
+                sync.ready = false;
+                setSyncBadge('warn', '⚠ Offline / server unreachable — showing this device\'s copy. Tap to retry.');
+                return !!local;
+            }
+            sync.ready = true;
+            if (server.data) {
+                applyLoadedData(server.data);
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(buildSaveData())); } catch (e) {}
+                return true;
+            }
+            if (local) { // first run after upgrade: migrate this browser's existing data up to the server
+                applyLoadedData(local);
+                sync.dirty = true;
+                flushSync();
+                toast('Existing local data uploaded to the server');
+                return true;
+            }
+            return false;
+        }
+
+        // Tap on the sync badge: retry now (or finish a failed initial load).
+        async function retrySync() {
+            if (sync.ready) { flushSync(); return; }
+            try {
+                const server = await oaApi('/api/roster-data', 'GET', undefined, oaAdminHeaders());
+                if (server.data && sync.dirty &&
+                    !confirm('The server already has roster data. OK = overwrite it with THIS device\'s version.\nCancel = discard this device\'s changes and load the server\'s version.')) {
+                    applyLoadedData(server.data);
+                    sync.dirty = false;
+                    sync.ready = true;
+                    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(buildSaveData())); } catch (e) {}
+                    location.reload();
+                    return;
+                }
+                sync.ready = true;
+                sync.dirty = true;
+                flushSync();
+            } catch (e) { toast('Still unreachable: ' + e.message); }
+        }
+
+        window.addEventListener('online', () => { if (sync.dirty) retrySync(); });
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSync({ keepalive: true }); });
+        window.addEventListener('beforeunload', (e) => { if (sync.dirty) { e.preventDefault(); e.returnValue = ''; } });
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  TOAST
@@ -2100,7 +2231,7 @@
                 rows.push(['']);
             });
             const blob = rowsToCSVBlob(rows);
-            triggerDownload(blob, `duty-history-full-${new Date().toISOString().slice(0,10)}.csv`);
+            triggerDownload(blob, `duty-history-full-${localISODate(new Date())}.csv`);
             toast('Full history exported');
         }
 
@@ -2124,7 +2255,7 @@
                 rosterLog: state.rosterLog
             };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            triggerDownload(blob, `roster-data-${new Date().toISOString().slice(0,10)}.json`);
+            triggerDownload(blob, `roster-data-${localISODate(new Date())}.json`);
             toast('Data exported');
         }
 
@@ -2232,8 +2363,14 @@
         }
 
         function oaDisconnect() {
+            // Disconnect == lock this browser: forget the PIN and wipe the local roster cache.
+            if (sync.dirty && !confirm('There are changes that have NOT synced to the server yet. Locking now will lose them. Lock anyway?')) return;
+            sync.dirty = false;
             localStorage.removeItem(OA_URL_KEY);
             localStorage.removeItem(OA_PIN_KEY);
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+            return;
             document.getElementById('oaConnectBtn').style.display = '';
             document.getElementById('oaDisconnectBtn').style.display = 'none';
             document.getElementById('oaServerUrl').disabled = false;
@@ -2261,10 +2398,24 @@
                 let html = '<table class="grid"><thead><tr><th>Username</th><th>Display name</th><th>Designation</th><th></th></tr></thead><tbody>';
                 data.accounts.forEach((a) => {
                     html += '<tr><td>' + escapeHtml(a.username) + '</td><td>' + escapeHtml(a.displayName) + '</td><td>' + escapeHtml(a.designation) + '</td>' +
-                        '<td><button class="ghost small" data-remove-account="' + escapeHtml(a.username) + '">Remove</button></td></tr>';
+                        '<td style="white-space:nowrap;"><button class="ghost small" data-edit-account="' + escapeHtml(a.username) + '">Reset password</button> <button class="ghost small" data-remove-account="' + escapeHtml(a.username) + '">Remove</button></td></tr>';
                 });
                 html += '</tbody></table>';
                 wrap.innerHTML = html;
+                wrap.querySelectorAll('[data-edit-account]').forEach((btn) => {
+                    btn.addEventListener('click', async function () {
+                        const username = this.getAttribute('data-edit-account');
+                        const password = prompt('New password for "' + username + '":');
+                        if (password === null) return;
+                        if (!password) { toast('Password cannot be empty'); return; }
+                        this.disabled = true;
+                        try {
+                            await oaApi('/api/accounts', 'POST', { username, password, update: true }, oaAdminHeaders());
+                            toast('Password changed for ' + username);
+                        } catch (e) { toast('Failed: ' + e.message); }
+                        this.disabled = false;
+                    });
+                });
                 wrap.querySelectorAll('[data-remove-account]').forEach((btn) => {
                     btn.addEventListener('click', async function () {
                         const username = this.getAttribute('data-remove-account');
@@ -2281,22 +2432,35 @@
             }
         }
 
+        let oaAddBusy = false;
         async function oaAddAccount() {
-            const username = document.getElementById('oaNewUsername').value.trim();
+            if (oaAddBusy) return;
+            const username = document.getElementById('oaNewUsername').value.trim().toLowerCase();
             const password = document.getElementById('oaNewPassword').value;
             const displayName = document.getElementById('oaNewDisplayName').value.trim();
             const designation = document.getElementById('oaNewDesignation').value;
             if (!username || !password) { toast('Username and password are required'); return; }
+            if (/\s/.test(username)) { toast('Username cannot contain spaces'); return; }
+            const btn = document.getElementById('oaAddAccountBtn');
+            oaAddBusy = true; btn.disabled = true; btn.textContent = 'Saving…';
             try {
+                // Fresh list (never cached) so we can warn before hitting the server's own 409 check.
+                const list = await oaApi('/api/accounts', 'GET', undefined, oaAdminHeaders());
+                if (list.accounts.some((a) => a.username.toLowerCase() === username)) {
+                    toast('"' + username + '" already exists — use Reset password on its row');
+                    return;
+                }
                 await oaApi('/api/accounts', 'POST', { username, password, displayName, designation }, oaAdminHeaders());
                 document.getElementById('oaNewUsername').value = '';
                 document.getElementById('oaNewPassword').value = '';
                 document.getElementById('oaNewDisplayName').value = '';
                 await oaRefreshAccounts();
                 await oaRefreshStatus();
-                toast('Account added');
+                toast('Account added (username saved as "' + username + '")');
             } catch (e) {
                 toast('Could not add account: ' + e.message);
+            } finally {
+                oaAddBusy = false; btn.disabled = false; btn.textContent = '+ Add account';
             }
         }
 
@@ -2324,7 +2488,7 @@
             const toDate = (function () {
                 const d = new Date(fromDate + 'T00:00:00');
                 d.setDate(d.getDate() + 6);
-                return d.toISOString().slice(0, 10);
+                return localISODate(d);
             })();
             if (!confirm('Open a new availability window for ' + fromDate + ' to ' + toDate + '?\n\nThis resets every announcer back to unlocked/blank for this new week.')) return;
             try {
@@ -2465,9 +2629,9 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  EVENT BINDING
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        document.addEventListener('DOMContentLoaded', function() {
+        async function startApp() {
 
-            const loaded = loadState();
+            const loaded = await loadState();
             if (!loaded) {
                 // Start completely blank — no demo names, no sample phone
                 // numbers. The table stays empty until you add a row
@@ -2514,7 +2678,7 @@
             if (state.weekStart) {
                 document.getElementById('weekStart').value = state.weekStart;
             } else {
-                document.getElementById('weekStart').value = nextSunday.toISOString().slice(0, 10);
+                document.getElementById('weekStart').value = localISODate(nextSunday);
                 state.weekStart = document.getElementById('weekStart').value;
             }
 
@@ -2789,9 +2953,10 @@
             document.getElementById('oaOpenWindowBtn').addEventListener('click', oaOpenWindow);
             document.getElementById('oaRefreshStatusBtn').addEventListener('click', oaRefreshStatus);
             document.getElementById('oaFetchBtn').addEventListener('click', oaFetchIntoRoster);
+            document.getElementById('syncBadge').addEventListener('click', retrySync);
             oaInit();
 
-        });
+        }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  SECTION 5 · SIMPLE DUTY CHART GENERATOR (e.g. Vichar Bindu)
@@ -3139,6 +3304,60 @@
         // box but not yet parsed), which is worse than just showing a small
         // "update available" banner and letting whoever's using it choose
         // when to tap it — after they've finished whatever they were doing.
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  PAGE-LEVEL PIN GATE. The admin UI stays hidden and no roster data
+        //  is read from storage until the server accepts the PIN.
+        //  (Static HTML is still downloadable by anyone — only data is protected.)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        (function () {
+            let started = false;
+            const gateErr = (m) => { document.getElementById('gateErr').textContent = m || ''; };
+            function unlock() {
+                if (started) return; started = true;
+                document.body.classList.remove('locked');
+                startApp();
+            }
+            async function verify(url, pin) {
+                const res = await fetch(url + '/api/accounts', { headers: { 'x-sync-pin': pin } });
+                if (res.status === 401) return false;
+                if (!res.ok) throw new Error('Server error ' + res.status);
+                return true;
+            }
+            function showGate(msg) {
+                document.body.classList.add('locked');
+                document.getElementById('gateUrl').value = oaConfig().url || (location.protocol.startsWith('http') ? location.origin : '');
+                gateErr(msg);
+            }
+            async function submit() {
+                const pin = document.getElementById('gatePin').value.trim();
+                const url = document.getElementById('gateUrl').value.trim().replace(/\/$/, '');
+                if (!pin || !url) { gateErr('Enter the PIN'); return; }
+                const btn = document.getElementById('gateBtn'); btn.disabled = true; gateErr('');
+                try {
+                    if (await verify(url, pin)) {
+                        localStorage.setItem(OA_URL_KEY, url);
+                        localStorage.setItem(OA_PIN_KEY, pin);
+                        document.getElementById('gatePin').value = '';
+                        unlock();
+                    } else gateErr('Wrong PIN');
+                } catch (e) { gateErr('Could not reach server: ' + e.message); }
+                btn.disabled = false;
+            }
+            document.getElementById('gateBtn').addEventListener('click', submit);
+            document.getElementById('gatePin').addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+
+            document.addEventListener('DOMContentLoaded', async function () {
+                const cfg = oaConfig();
+                if (!cfg.enabled) { showGate(); return; }
+                try {
+                    if (await verify(cfg.url, cfg.pin)) unlock();
+                    else { localStorage.removeItem(OA_PIN_KEY); showGate('PIN was changed or is no longer valid — enter it again'); }
+                } catch (e) {
+                    unlock(); // offline with a previously-verified PIN: allow, working from the local cache
+                }
+            });
+        })();
+
         if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
             window.addEventListener('load', function () {
                 let waitingWorker = null;

@@ -3,7 +3,7 @@
 // GET never returns password hashes — only what the admin dashboard needs to show.
 
 const { getRedis } = require('../lib/db');
-const { randomSalt, hashPassword, checkAdminPin, setCors, parseBody } = require('../lib/auth');
+const { randomSalt, hashPassword, checkAdminPin, setCors, parseBody, normalizeUsername, findAccountKey } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
     setCors(res);
@@ -34,32 +34,41 @@ module.exports = async function handler(req, res) {
         return;
     }
 
+    // POST has two explicit modes (never a silent overwrite):
+    //   { username, password, displayName?, designation? }              -> CREATE. 409 if the username exists.
+    //   { username, password?, displayName?, designation?, update:true } -> UPDATE an existing account
+    //                                                                      (e.g. password reset). 404 if missing.
     if (req.method === 'POST') {
         try {
             const body = parseBody(req);
-            const username = (body.username || '').toString().trim();
-            if (!username) { res.status(400).json({ error: 'username is required' }); return; }
+            const typed = normalizeUsername(body.username);
+            if (!typed) { res.status(400).json({ error: 'username is required' }); return; }
             const accounts = (await redis.get('accounts')) || {};
-            const existing = accounts[username];
+            const existingKey = findAccountKey(accounts, typed);
+            const existing = existingKey ? accounts[existingKey] : null;
+            const isUpdate = body.update === true;
 
-            if (!existing && !body.password) {
-                res.status(400).json({ error: 'password is required when creating a new account' });
-                return;
+            if (isUpdate) {
+                if (!existing) { res.status(404).json({ error: 'No such account: ' + typed }); return; }
+                if (!body.password && body.displayName === undefined && body.designation === undefined) {
+                    res.status(400).json({ error: 'Nothing to update' }); return;
+                }
+            } else {
+                if (existing) { res.status(409).json({ error: 'Username "' + existingKey + '" already exists — use Edit/Reset password on that row instead' }); return; }
+                if (!body.password) { res.status(400).json({ error: 'password is required when creating a new account' }); return; }
             }
 
+            const key = existingKey || typed;
             const salt = existing ? existing.salt : randomSalt();
-            const passwordHash = body.password
-                ? hashPassword(body.password, salt)
-                : (existing ? existing.passwordHash : null);
-
-            accounts[username] = {
+            const passwordHash = body.password ? hashPassword(body.password.toString(), salt) : existing.passwordHash;
+            accounts[key] = {
                 passwordHash,
                 salt,
-                displayName: (body.displayName || username).toString(),
-                designation: (body.designation || (existing ? existing.designation : 'सी.ए.')).toString()
+                displayName: (body.displayName || (existing ? existing.displayName : '') || key).toString(),
+                designation: (body.designation || (existing ? existing.designation : '') || 'सी.ए.').toString()
             };
             await redis.set('accounts', accounts);
-            res.status(200).json({ ok: true, username, created: !existing });
+            res.status(200).json({ ok: true, username: key, created: !existing });
         } catch (e) {
             console.error('accounts POST failed', e);
             res.status(500).json({ error: 'Failed to save account' });
@@ -70,10 +79,10 @@ module.exports = async function handler(req, res) {
     if (req.method === 'DELETE') {
         try {
             const body = parseBody(req);
-            const username = (body.username || '').toString().trim();
-            if (!username) { res.status(400).json({ error: 'username is required' }); return; }
+            if (!normalizeUsername(body.username)) { res.status(400).json({ error: 'username is required' }); return; }
             const accounts = (await redis.get('accounts')) || {};
-            delete accounts[username];
+            const key = findAccountKey(accounts, body.username);
+            if (key) delete accounts[key];
             await redis.set('accounts', accounts);
             res.status(200).json({ ok: true });
         } catch (e) {

@@ -214,10 +214,16 @@
         return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
     }
 
+    // Local calendar date as YYYY-MM-DD. Never use toISOString() for this: it
+    // converts to UTC first, which is the previous day for zones ahead of UTC (IST).
+    function localISODate(d) {
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
     function addDays(iso, n) {
         const d = new Date(iso + 'T00:00:00');
         d.setDate(d.getDate() + n);
-        return d.toISOString().slice(0, 10);
+        return localISODate(d);
     }
 
     function fmtDeadline(iso) {

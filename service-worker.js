@@ -22,7 +22,7 @@
 // reloads automatically the moment a new one takes control — so a person
 // using the app doesn't have to do anything for an update to reach them.
 
-const CACHE_NAME = 'duty-roster-cache-v8'; // ← bump this on every real deploy
+const CACHE_NAME = 'duty-roster-cache-v9'; // ← bump this on every real deploy
 const PRECACHE_URLS = [
     './',
     './index.html',
@@ -59,25 +59,29 @@ self.addEventListener('message', (event) => {
     }
 });
 
-// Network-first for navigations (the actual HTML page) — always try to get
-// the latest version from the server first, and only fall back to whatever
-// was cached if there's no network right now. This is what stops "the
-// server has the new version but the browser just won't ask for it."
-// Cache-first for everything else (icons, manifest) since those change
-// rarely and it's fine to serve them instantly from cache.
+// /api/* is NEVER touched by the Cache Storage API: those responses are live
+// data (windows, submissions, accounts, roster-data) and vercel.json already
+// marks them no-store. We don't call respondWith() at all, so the browser does
+// a plain network request (offline -> a normal network error the app handles).
+// Navigations (HTML pages) are network-first with an offline fallback.
+// Only same-origin static assets (icons, manifest) are cache-first.
 self.addEventListener('fetch', (event) => {
     const req = event.request;
     if (req.method !== 'GET') return;
 
-    const isNavigation = req.mode === 'navigate' ||
-        (req.destination === 'document');
+    const url = new URL(req.url);
+    if (url.pathname.startsWith('/api/')) return; // network-only, any origin
+
+    const isNavigation = req.mode === 'navigate' || req.destination === 'document';
 
     if (isNavigation) {
         event.respondWith(
             fetch(req)
                 .then((res) => {
-                    const copy = res.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+                    if (res.ok) {
+                        const copy = res.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+                    }
                     return res;
                 })
                 .catch(() => caches.match(req).then((res) => res || caches.match('./index.html')))
@@ -85,14 +89,18 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    if (url.origin !== self.location.origin) return; // don't cache third-party GETs (fonts, CDN scripts)
+
     event.respondWith(
         caches.match(req).then((cached) => {
             if (cached) return cached;
             return fetch(req).then((res) => {
-                const copy = res.clone();
-                caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+                if (res.ok) {
+                    const copy = res.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+                }
                 return res;
-            }).catch(() => cached);
+            });
         })
     );
 });
