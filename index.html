@@ -553,6 +553,10 @@
             .stat-strip { flex-wrap: wrap; }
             footer { padding: 16px 12px 80px; }
         }
+        .logout-btn { position: absolute; top: 12px; right: 16px; z-index: 5; background: transparent; border: 1px solid var(--amber); color: var(--amber); border-radius: 999px; padding: 6px 14px; min-height: 36px; font-size: 13px; text-transform: none; letter-spacing: 0; cursor: pointer; }
+        .logout-btn:hover { background: var(--amber); color: #1a1205; }
+        header .eyebrow { padding-right: 110px; }
+        @media (max-width: 700px) { .logout-btn { top: 8px; right: 10px; min-height: 38px; } }
     </style>
 </head>
 <body class="locked">
@@ -572,6 +576,7 @@
 
     <!-- ═══ HEADER ═══ -->
     <header>
+        <button id="logoutBtn" class="logout-btn" title="Log out of the admin panel">🔒 Log out</button>
         <div class="eyebrow"><span class="dot"></span> Prasar Bharati · Akashvani Ambikapur</div>
         <h1>Weekly Duty Roster Generator</h1>
         <details class="about"><summary>ℹ️ How this works</summary>
@@ -783,7 +788,7 @@
                         <input type="text" id="oaServerUrl" placeholder="Server URL, e.g. https://your-roster.vercel.app" style="flex:1; min-width:200px;" />
                         <input type="password" id="oaAdminPin" placeholder="Admin PIN" style="width:120px;" />
                         <button class="ghost small" id="oaConnectBtn">Connect</button>
-                        <button class="ghost small" id="oaDisconnectBtn" style="display:none;">Lock &amp; disconnect</button>
+                        <button class="ghost small" id="oaDisconnectBtn" style="display:none;">Log out</button>
                     </div>
                 </details>
                 <div class="muted" id="oaStatus" style="margin-top:8px; font-size:12px;">🌐 Not connected.</div>
@@ -2868,24 +2873,29 @@
             }
         }
 
-        function oaDisconnect() {
-            // Disconnect == lock this browser: forget the PIN and wipe the local roster cache.
-            if (sync.dirty && !confirm('There are changes that have NOT synced to the server yet. Locking now will lose them. Lock anyway?')) return;
-            sync.dirty = false;
-            localStorage.removeItem(OA_URL_KEY);
-            localStorage.removeItem(OA_PIN_KEY);
-            localStorage.removeItem(STORAGE_KEY);
-            location.reload();
-            return;
-            document.getElementById('oaConnectBtn').style.display = '';
-            document.getElementById('oaDisconnectBtn').style.display = 'none';
-            document.getElementById('oaServerUrl').disabled = false;
-            document.getElementById('oaAdminPin').disabled = false;
-            document.getElementById('oaServerUrl').value = '';
-            document.getElementById('oaAdminPin').value = '';
-            document.getElementById('oaPanels').style.display = 'none';
-            oaSetStatus('🌐 Not connected.');
+        // Log out: forget the PIN on this browser, wipe every locally cached copy of roster data
+        // and duty history, stop pending syncs, and return to the PIN screen.
+        // (Admin access is the shared SYNC_PIN, so there is no server session to end; to cut off
+        // someone who knows the PIN, change SYNC_PIN in Vercel.)
+        let loggingOut = false;
+        async function logoutAdmin(opts) {
+            if (loggingOut) return;
+            loggingOut = true;
+            try {
+                const forced = !!(opts && opts.forced);
+                if (sync.dirty && !forced) {
+                    try { await flushSync(); } catch (e) {}
+                    if (sync.dirty && !confirm('Some changes have NOT synced to the server yet and will be lost if you log out. Log out anyway?')) { loggingOut = false; return; }
+                }
+                sync.dirty = false;
+                clearTimeout(sync.timer); clearTimeout(sync.retryTimer);
+                [OA_PIN_KEY, STORAGE_KEY, HISTORY_CACHE_KEY].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+                try { sessionStorage.clear(); } catch (e) {}
+            } finally {
+                location.replace(location.pathname); // fresh load, no #tab, lands on the PIN screen
+            }
         }
+        function oaDisconnect() { logoutAdmin(); }
 
         async function oaRefreshAll() {
             await oaRefreshAccounts();
@@ -3491,6 +3501,11 @@
             document.getElementById('oaFetchBtn').addEventListener('click', oaFetchIntoRoster);
             document.getElementById('syncBadge').addEventListener('click', retrySync);
             document.getElementById('downloadAvailPdfBtn').addEventListener('click', downloadAvailabilityPdf);
+            document.getElementById('logoutBtn').addEventListener('click', () => logoutAdmin());
+            // Logged out in another tab -> lock this one too.
+            window.addEventListener('storage', e => { if (e.key === OA_PIN_KEY && !e.newValue) logoutAdmin({ forced: true }); });
+            // Back/forward cache must never show the admin UI again after logout.
+            window.addEventListener('pageshow', e => { if (e.persisted && !localStorage.getItem(OA_PIN_KEY)) location.reload(); });
             document.getElementById('toggleAnnListBtn').addEventListener('click', function () {
                 setAnnListOpen(document.getElementById('annListWrap').style.display === 'none');
             });
