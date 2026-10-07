@@ -644,6 +644,7 @@
                 <div class="toolbar" style="margin-top:0;">
                     <button id="toggleAnnListBtn" aria-expanded="false">👥 <span id="annToggleLabel">View announcers</span> <span id="annCountBadge" class="count-badge">0</span></button>
                     <button class="ghost" id="addRowBtn">+ Add announcer</button>
+                    <button class="ghost" id="downloadAvailPdfBtn">⬇ Download availability PDF</button>
                     <button class="ghost" id="clearAllBtn">Clear all</button>
                 </div>
                 <div class="text-muted" id="annSummary" style="margin-top:6px;"></div>
@@ -1390,6 +1391,175 @@
             let t = (location.hash || '').slice(1);
             if (!TABS.includes(t)) { try { t = sessionStorage.getItem('active-tab'); } catch (e) {} }
             showTab(t, true);
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  AVAILABILITY PDF (one A4-landscape page, no external library)
+        //  The table is drawn on a canvas (so Hindi designations render
+        //  properly) and wrapped in a minimal PDF as a high-res image.
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function drawAvailabilityCanvas() {
+            const PT_W = 842, PT_H = 595, SC = 3;
+            const cv = document.createElement('canvas');
+            cv.width = PT_W * SC; cv.height = PT_H * SC;
+            const c = cv.getContext('2d');
+            c.scale(SC, SC);
+            const FONT = "'Inter','Noto Sans Devanagari','Mangal','Segoe UI',Arial,sans-serif";
+            const font = (sz, w) => (w || '400') + ' ' + sz + 'px ' + FONT;
+            c.fillStyle = '#ffffff'; c.fillRect(0, 0, PT_W, PT_H);
+
+            const anns = state.announcers;
+            const n = anns.length;
+            const M = 28;
+
+            // week label
+            const fmt = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+            let weekLabel = 'Week not set', dayDates = DAYS_SHORT.map(() => '');
+            if (state.weekStart) {
+                const d0 = new Date(state.weekStart + 'T00:00:00');
+                const d6 = new Date(d0); d6.setDate(d6.getDate() + 6);
+                weekLabel = fmt(d0) + ' ' + d0.getFullYear() + '  –  ' + fmt(d6) + ' ' + d6.getFullYear();
+                dayDates = DAYS_SHORT.map((_, i) => { const d = new Date(d0); d.setDate(d.getDate() + i); return fmt(d); });
+            }
+
+            // title block
+            c.textBaseline = 'alphabetic';
+            c.fillStyle = '#1f746e'; c.font = font(8, '600');
+            c.fillText('PRASAR BHARATI · AKASHVANI AMBIKAPUR', M, 34);
+            c.fillStyle = '#0e1a22'; c.font = font(20, '700');
+            c.fillText('Announcer Availability', M, 56);
+            c.fillStyle = '#444'; c.font = font(10.5, '400');
+            c.fillText('Week: ' + weekLabel + '   ·   ' + n + ' announcer' + (n === 1 ? '' : 's'), M, 72);
+            c.textAlign = 'right'; c.fillStyle = '#777'; c.font = font(8.5, '400');
+            c.fillText('Generated ' + new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), PT_W - M, 72);
+            c.textAlign = 'left';
+
+            // geometry
+            const top = 84, bottom = PT_H - M - 46;
+            const nameW = 150, desW = 52, phoneW = 46;
+            const sabW = (PT_W - 2 * M - nameW - desW - phoneW) / 21;
+            const hdr1 = 22, hdr2 = 14;
+            const rows = n + 1; // + totals row
+            const rowH = Math.min(26, (bottom - top - hdr1 - hdr2) / rows);
+            const fs = Math.max(5, Math.min(11, rowH * 0.48));
+            const x0 = M;
+            const colX = i => x0 + nameW + desW + i * sabW;           // i = 0..20
+            const phoneX = x0 + nameW + desW + 21 * sabW;
+            const tableW = nameW + desW + 21 * sabW + phoneW;
+
+            // header
+            c.fillStyle = '#0e3b43'; c.fillRect(x0, top, tableW, hdr1 + hdr2);
+            c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle';
+            c.font = font(9.5, '700');
+            DAYS_SHORT.forEach((d, di) => {
+                const gx = colX(di * 3), gw = sabW * 3;
+                c.fillText(d + (dayDates[di] ? '  ' + dayDates[di] : ''), gx + gw / 2, top + hdr1 / 2);
+                c.font = font(7.5, '600');
+                SABHAS.forEach((sb, si) => c.fillText(sb.key.toUpperCase(), colX(di * 3 + si) + sabW / 2, top + hdr1 + hdr2 / 2));
+                c.font = font(9.5, '700');
+                if (di > 0) { c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1; c.beginPath(); c.moveTo(gx, top); c.lineTo(gx, top + hdr1 + hdr2); c.stroke(); }
+            });
+            c.textAlign = 'left'; c.font = font(9.5, '700');
+            c.fillText('Announcer', x0 + 6, top + (hdr1 + hdr2) / 2);
+            c.fillText('Desig.', x0 + nameW + 6, top + (hdr1 + hdr2) / 2);
+            c.textAlign = 'center';
+            c.fillText('Phone in', phoneX + phoneW / 2, top + (hdr1 + hdr2) / 2);
+
+            const clip = (txt, maxW) => {
+                if (c.measureText(txt).width <= maxW) return txt;
+                while (txt.length > 1 && c.measureText(txt + '…').width > maxW) txt = txt.slice(0, -1);
+                return txt + '…';
+            };
+            const tick = (cx, cy, r, color) => {
+                c.strokeStyle = color; c.lineWidth = Math.max(1, r * 0.28); c.lineCap = 'round'; c.lineJoin = 'round';
+                c.beginPath(); c.moveTo(cx - r * 0.55, cy + r * 0.02); c.lineTo(cx - r * 0.12, cy + r * 0.45); c.lineTo(cx + r * 0.6, cy - r * 0.42); c.stroke();
+            };
+            const dayTotals = new Array(21).fill(0); let phoneTotal = 0;
+            const y0 = top + hdr1 + hdr2;
+
+            anns.forEach((a, ri) => {
+                const y = y0 + ri * rowH;
+                c.fillStyle = ri % 2 ? '#f6f8f9' : '#ffffff'; c.fillRect(x0, y, nameW + desW, rowH);
+                c.textAlign = 'left'; c.textBaseline = 'middle';
+                c.fillStyle = '#0e1a22'; c.font = font(fs, '600');
+                c.fillText(clip(a.name || '', nameW - 10), x0 + 6, y + rowH / 2);
+                c.fillStyle = '#555'; c.font = font(fs * 0.9, '400');
+                c.fillText(clip(a.designation || '', desW - 8), x0 + nameW + 6, y + rowH / 2);
+                for (let di = 0; di < 7; di++) {
+                    SABHAS.forEach((sb, si) => {
+                        const i = di * 3 + si, on = !!(a.avail && a.avail[di] && a.avail[di][sb.key]);
+                        c.fillStyle = on ? '#d3efe0' : (ri % 2 ? '#f6f8f9' : '#ffffff');
+                        c.fillRect(colX(i), y, sabW, rowH);
+                        if (on) { dayTotals[i]++; tick(colX(i) + sabW / 2, y + rowH / 2, Math.min(sabW, rowH) * 0.36, '#1b7a4b'); }
+                    });
+                }
+                const ph = !!a.phoneIn; if (ph) phoneTotal++;
+                c.fillStyle = ph ? '#fde8b8' : (ri % 2 ? '#f6f8f9' : '#ffffff'); c.fillRect(phoneX, y, phoneW, rowH);
+                if (ph) tick(phoneX + phoneW / 2, y + rowH / 2, Math.min(phoneW, rowH) * 0.36, '#a86a00');
+            });
+
+            // totals row
+            const ty = y0 + n * rowH;
+            c.fillStyle = '#fff3d6'; c.fillRect(x0, ty, tableW, rowH);
+            c.fillStyle = '#0e1a22'; c.textBaseline = 'middle'; c.textAlign = 'left'; c.font = font(fs, '700');
+            c.fillText('Total available', x0 + 6, ty + rowH / 2);
+            c.textAlign = 'center';
+            for (let i = 0; i < 21; i++) c.fillText(String(dayTotals[i]), colX(i) + sabW / 2, ty + rowH / 2);
+            c.fillText(String(phoneTotal), phoneX + phoneW / 2, ty + rowH / 2);
+
+            // grid lines
+            c.lineWidth = 0.4; c.strokeStyle = '#c9d1d6';
+            for (let r = 0; r <= rows; r++) { const y = y0 + r * rowH; c.beginPath(); c.moveTo(x0, y); c.lineTo(x0 + tableW, y); c.stroke(); }
+            for (let i = 0; i <= 21; i++) { if (i % 3 === 0) continue; const x = colX(i); c.beginPath(); c.moveTo(x, y0); c.lineTo(x, y0 + rows * rowH); c.stroke(); }
+            c.lineWidth = 1; c.strokeStyle = '#7d8b93';
+            [0, nameW, nameW + desW].forEach(o => { const x = x0 + o; c.beginPath(); c.moveTo(x, y0); c.lineTo(x, y0 + rows * rowH); c.stroke(); });
+            for (let di = 0; di <= 7; di++) { const x = colX(di * 3); c.beginPath(); c.moveTo(x, y0); c.lineTo(x, y0 + rows * rowH); c.stroke(); }
+            [phoneX, phoneX + phoneW].forEach(x => { c.beginPath(); c.moveTo(x, y0); c.lineTo(x, y0 + rows * rowH); c.stroke(); });
+            c.strokeRect(x0, top, tableW, hdr1 + hdr2 + rows * rowH);
+
+            // legend
+            c.textAlign = 'left'; c.textBaseline = 'alphabetic'; c.fillStyle = '#555'; c.font = font(8.5, '400');
+            const ly = PT_H - M - 8;
+            const legend = SABHAS.map(sb => sb.key.toUpperCase() + ' = ' + sb.label + ' (' + sb.time + ')').join('    ');
+            c.fillText(legend, M, ly - 12);
+            tick(M + 4, ly - 1.5, 5, '#1b7a4b');
+            c.fillText('= available     Shaded green = available for that sabha     Phone in = available for the extra phone-in duty', M + 14, ly);
+            return cv;
+        }
+
+        function buildSinglePagePdf(jpeg, pxW, pxH, ptW, ptH) {
+            const enc = new TextEncoder(), parts = [], offs = [];
+            let len = 0;
+            const push = b => { const u = typeof b === 'string' ? enc.encode(b) : b; parts.push(u); len += u.length; };
+            const obj = (i, body) => { offs[i] = len; push(i + ' 0 obj\n' + body + '\nendobj\n'); };
+            push('%PDF-1.4\n');
+            obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+            obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+            obj(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + ptW + ' ' + ptH + '] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>');
+            offs[4] = len;
+            push('4 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + pxW + ' /Height ' + pxH + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpeg.length + ' >>\nstream\n');
+            push(jpeg); push('\nendstream\nendobj\n');
+            const content = 'q ' + ptW + ' 0 0 ' + ptH + ' 0 0 cm /Im0 Do Q';
+            obj(5, '<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream');
+            const xref = len;
+            let x = 'xref\n0 6\n0000000000 65535 f \n';
+            for (let i = 1; i <= 5; i++) x += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+            push(x + 'trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF');
+            return new Blob(parts, { type: 'application/pdf' });
+        }
+
+        async function downloadAvailabilityPdf() {
+            if (state.announcers.length === 0) { toast('Add announcers first'); return; }
+            try {
+                if (document.fonts && document.fonts.ready) await document.fonts.ready;
+                const cv = drawAvailabilityCanvas();
+                const b64 = cv.toDataURL('image/jpeg', 0.95).split(',')[1];
+                const bin = atob(b64), bytes = new Uint8Array(bin.length);
+                for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                const blob = buildSinglePagePdf(bytes, cv.width, cv.height, 842, 595);
+                triggerDownload(blob, 'announcer-availability-' + (state.weekStart || localISODate(new Date())) + '.pdf');
+                toast('Availability PDF downloaded');
+            } catch (e) { toast('Could not create PDF: ' + e.message); }
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3320,6 +3490,7 @@
             document.getElementById('oaRefreshStatusBtn').addEventListener('click', oaRefreshStatus);
             document.getElementById('oaFetchBtn').addEventListener('click', oaFetchIntoRoster);
             document.getElementById('syncBadge').addEventListener('click', retrySync);
+            document.getElementById('downloadAvailPdfBtn').addEventListener('click', downloadAvailabilityPdf);
             document.getElementById('toggleAnnListBtn').addEventListener('click', function () {
                 setAnnListOpen(document.getElementById('annListWrap').style.display === 'none');
             });
@@ -3703,7 +3874,10 @@
             async function verify(url, pin) {
                 const res = await fetch(url + '/api/accounts', { headers: { 'x-sync-pin': pin } });
                 if (res.status === 401) return false;
-                if (!res.ok) throw new Error('Server error ' + res.status);
+                if (!res.ok) {
+                    const j = await res.json().catch(() => ({}));
+                    const err = new Error(j.error || ('Server error ' + res.status)); err.status = res.status; throw err;
+                }
                 return true;
             }
             function showGate(msg) {
@@ -3736,6 +3910,7 @@
                     if (await verify(cfg.url, cfg.pin)) unlock();
                     else { localStorage.removeItem(OA_PIN_KEY); showGate('PIN was changed or is no longer valid — enter it again'); }
                 } catch (e) {
+                    if (e.status === 429) { showGate(e.message); return; }
                     unlock(); // offline with a previously-verified PIN: allow, working from the local cache
                 }
             });

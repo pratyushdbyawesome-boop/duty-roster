@@ -30,7 +30,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-        const auth = checkAdminPin(req);
+        const auth = await checkAdminPin(req);
         if (!auth.ok) { res.status(auth.status).json({ error: auth.error }); return; }
         try {
             const body = parseBody(req);

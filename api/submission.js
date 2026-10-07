@@ -22,6 +22,19 @@ function submissionKey(windowId, username) {
     return 'submission:' + windowId + ':' + username;
 }
 
+// Never trust the client's shape: rebuild avail as exactly 7 days x {s1,s2,s3} booleans,
+// so a crafted request can't store junk or oversized data that the admin later pulls in.
+function cleanAvail(a) {
+    const out = emptyAvail();
+    if (a && typeof a === 'object') {
+        for (let d = 0; d < 7; d++) {
+            const day = a[d] || a[String(d)];
+            if (day && typeof day === 'object') out[d] = { s1: day.s1 === true, s2: day.s2 === true, s3: day.s3 === true };
+        }
+    }
+    return out;
+}
+
 module.exports = async function handler(req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') { res.status(204).end(); return; }
@@ -33,7 +46,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'PATCH') {
-        const admin = checkAdminPin(req);
+        const admin = await checkAdminPin(req);
         if (!admin.ok) { res.status(admin.status).json({ error: admin.error }); return; }
         try {
             const body = parseBody(req);
@@ -88,7 +101,7 @@ module.exports = async function handler(req, res) {
             }
             const body = parseBody(req);
             const record = {
-                avail: body.avail || emptyAvail(),
+                avail: cleanAvail(body.avail),
                 phoneIn: !!body.phoneIn,
                 locked: false,
                 updatedAt: Date.now()
@@ -111,7 +124,7 @@ module.exports = async function handler(req, res) {
             }
             const body = parseBody(req);
             const record = {
-                avail: body.avail || (existing ? existing.avail : emptyAvail()),
+                avail: body.avail ? cleanAvail(body.avail) : (existing ? existing.avail : emptyAvail()),
                 phoneIn: body.phoneIn !== undefined ? !!body.phoneIn : (existing ? existing.phoneIn : false),
                 locked: true,
                 updatedAt: Date.now(),

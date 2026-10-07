@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') { res.status(204).end(); return; }
 
-    const auth = checkAdminPin(req);
+    const auth = await checkAdminPin(req);
     if (!auth.ok) { res.status(auth.status).json({ error: auth.error }); return; }
 
     let redis;
