@@ -2317,7 +2317,6 @@
             // could jump around unpredictably instead of going day by day.)
             const slots = buildSlots();
             const pool = state.announcers.slice();
-            const usedThisWeek = new Set();
             const assignment = [];
 
             function candidateWeight(a) {
@@ -2329,18 +2328,47 @@
                 return w;
             }
 
-            slots.forEach(slot => {
-                const cands = pool.filter(a => !usedThisWeek.has(a.id) && isEligible(a, slot));
-                if (cands.length === 0) {
-                    assignment.push({ ...slot, announcer: null });
-                } else {
-                    const chosen = (state.balanceDuties || state.priorityMode)
-                        ? weightedRandomPick(cands, candidateWeight)
-                        : shuffle(cands)[0];
-                    usedThisWeek.add(chosen.id);
-                    assignment.push({ ...slot, announcer: chosen });
+            // Each announcer gets at most ONE duty per week. The old code gave every slot, in order,
+            // to a random eligible person and never looked ahead — so it could spend someone who was
+            // the ONLY option for a later slot, leaving that slot blank even though a complete roster
+            // existed. Now each slot first takes a free eligible person (same weighted-random pick as
+            // before); only if nobody is free does it try to RE-ARRANGE earlier picks (an "augmenting
+            // path": move someone already placed to another slot they can do, freeing them up). This
+            // is repeated for every slot, which guarantees the MAXIMUM possible number of filled
+            // duties. Already-filled slots never become blank, so Fourth Duty keeps its first pick.
+            const slotOf = new Map();               // announcer id -> slot index
+            const assignedTo = new Array(slots.length).fill(null);
+
+            function weightedOrder(list) {
+                const rest = list.slice(), out = [];
+                while (rest.length) {
+                    const pick = (state.balanceDuties || state.priorityMode)
+                        ? weightedRandomPick(rest, candidateWeight)
+                        : rest[Math.floor(Math.random() * rest.length)];
+                    out.push(pick);
+                    rest.splice(rest.indexOf(pick), 1);
                 }
-            });
+                return out;
+            }
+
+            function place(si, visited) {
+                const cands = pool.filter(a => isEligible(a, slots[si]) && !visited.has(a.id));
+                const free = cands.filter(a => !slotOf.has(a.id));
+                const taken = cands.filter(a => slotOf.has(a.id));
+                for (const a of weightedOrder(free).concat(weightedOrder(taken))) {
+                    visited.add(a.id);
+                    const cur = slotOf.get(a.id);
+                    if (cur === undefined || place(cur, visited)) {
+                        slotOf.set(a.id, si);
+                        assignedTo[si] = a;
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            slots.forEach((slot, si) => { place(si, new Set()); });
+            slots.forEach((slot, si) => assignment.push({ ...slot, announcer: assignedTo[si] || null }));
             return assignment;
         }
 
@@ -2357,7 +2385,10 @@
 
             document.getElementById('statStrip').innerHTML =
                 `<div class="stat"><b>${filled}/${total}</b> sabhas filled</div>` +
-                `<div class="stat"><b>${assignment.filter(a=>a.type==='phoneIn' && a.announcer).length}/${state.phoneInDays.length||0}</b> fourth duties filled</div>`;
+                `<div class="stat"><b>${assignment.filter(a=>a.type==='phoneIn' && a.announcer).length}/${state.phoneInDays.length||0}</b> fourth duties filled</div>` +
+                ((filled < total || assignment.some(a => a.type === 'phoneIn' && !a.announcer))
+                    ? `<div class="stat" style="flex-basis:100%;"><span style="color:var(--paper-dim);font-size:12px;">Blank slots have no remaining announcer who is available for them (each person gets one duty per week). This is the most duties that can be filled with the current availability.</span></div>`
+                    : '');
 
             let html =
                 `<table class="roster-table"><thead><tr><th>Day / Date</th>` +
@@ -3098,13 +3129,21 @@
                 oaLatestFetch = data;
                 if (!data.window) { toast('No availability window is open'); return; }
                 const locked = data.people.filter((p) => p.submission && p.submission.locked);
-                if (locked.length === 0) {
-                    document.getElementById('oaFetchResult').textContent = 'Nobody has a locked-in answer right now — nothing was changed in the table above.';
-                    toast('Nobody has locked in their availability yet');
-                    return;
+                const notLocked = data.people.filter((p) => !(p.submission && p.submission.locked));
+
+                // Fetch means "make the table match this window". Anyone with an online login who has
+                // NOT locked in for this window must not keep last week's availability, so they are
+                // cleared. Announcers without an online login (e.g. added from WhatsApp) are never touched.
+                const hasAnyAvail = (a) => a.phoneIn || DAYS.some((_, d) => a.avail && a.avail[d] && SABHAS.some((sb) => a.avail[d][sb.key]));
+                const toClear = notLocked
+                    .map((p) => state.announcers.find((a) => normalizeNameForMatch(a.name) === normalizeNameForMatch(p.displayName)))
+                    .filter((a) => a && hasAnyAvail(a));
+                if (toClear.length > 0) {
+                    const names = toClear.slice(0, 8).map((a) => a.name).join(', ') + (toClear.length > 8 ? ', …' : '');
+                    if (!confirm('These ' + toClear.length + ' announcer(s) have not locked in for this window, so their old availability will be CLEARED:\n\n' + names + '\n\nContinue?')) return;
                 }
 
-                let updated = 0, added = 0;
+                let updated = 0, added = 0, cleared = 0;
                 locked.forEach((p) => {
                     const key = normalizeNameForMatch(p.displayName);
                     const existing = state.announcers.find((a) => normalizeNameForMatch(a.name) === key);
@@ -3126,13 +3165,21 @@
                         added++;
                     }
                 });
+                notLocked.forEach((p) => {
+                    const existing = state.announcers.find((a) => normalizeNameForMatch(a.name) === normalizeNameForMatch(p.displayName));
+                    if (existing) {
+                        if (hasAnyAvail(existing)) cleared++;
+                        existing.avail = emptyAvail();
+                        existing.phoneIn = false;
+                    }
+                });
                 renderAnnTable();
                 saveState();
-                const skipped = data.people.length - locked.length;
                 document.getElementById('oaFetchResult').textContent =
-                    'Fetched ' + locked.length + ' locked-in answer(s): ' + updated + ' updated, ' + added + ' added.' +
-                    (skipped > 0 ? ' (' + skipped + ' not locked yet, skipped.)' : '');
-                toast('Fetched into announcer table — ' + updated + ' updated, ' + added + ' added');
+                    'Fetched for this window: ' + locked.length + ' locked-in (' + updated + ' updated, ' + added + ' added)' +
+                    (notLocked.length > 0 ? '; ' + notLocked.length + ' not locked yet (' + cleared + ' cleared to blank)' : '') +
+                    '. Announcers without an online login were left as they were.';
+                toast('Fetched — ' + updated + ' updated, ' + added + ' added, ' + cleared + ' cleared');
             } catch (e) {
                 toast('Fetch failed: ' + e.message);
             }
