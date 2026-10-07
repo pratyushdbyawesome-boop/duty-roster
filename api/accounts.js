@@ -36,8 +36,9 @@ module.exports = async function handler(req, res) {
 
     // POST has two explicit modes (never a silent overwrite):
     //   { username, password, displayName?, designation? }              -> CREATE. 409 if the username exists.
-    //   { username, password?, displayName?, designation?, update:true } -> UPDATE an existing account
-    //                                                                      (e.g. password reset). 404 if missing.
+    //   { username, password?, displayName?, designation?, newUsername?, update:true }
+    //                                                                    -> UPDATE an existing account (password reset,
+    //                                                                       rename display name / username). 404 if missing.
     if (req.method === 'POST') {
         try {
             const body = parseBody(req);
@@ -50,7 +51,7 @@ module.exports = async function handler(req, res) {
 
             if (isUpdate) {
                 if (!existing) { res.status(404).json({ error: 'No such account: ' + typed }); return; }
-                if (!body.password && body.displayName === undefined && body.designation === undefined) {
+                if (!body.password && body.displayName === undefined && body.designation === undefined && !body.newUsername) {
                     res.status(400).json({ error: 'Nothing to update' }); return;
                 }
             } else {
@@ -58,9 +59,23 @@ module.exports = async function handler(req, res) {
                 if (!body.password) { res.status(400).json({ error: 'password is required when creating a new account' }); return; }
             }
 
-            const key = existingKey || typed;
+            let key = existingKey || typed;
+            let renamedFrom = null;
+            if (isUpdate && body.newUsername) {
+                const nu = normalizeUsername(body.newUsername);
+                if (!nu || /\s/.test(nu)) { res.status(400).json({ error: 'New username must not be empty or contain spaces' }); return; }
+                if (nu !== normalizeUsername(existingKey)) {
+                    if (findAccountKey(accounts, nu)) { res.status(409).json({ error: 'Username "' + nu + '" is already taken' }); return; }
+                    renamedFrom = existingKey;
+                    key = nu;
+                } else if (nu !== existingKey) { // same name, only the legacy mixed case is being normalised
+                    renamedFrom = existingKey;
+                    key = nu;
+                }
+            }
             const salt = existing ? existing.salt : randomSalt();
             const passwordHash = body.password ? hashPassword(body.password.toString(), salt) : existing.passwordHash;
+            if (renamedFrom) delete accounts[renamedFrom];
             accounts[key] = {
                 passwordHash,
                 salt,
@@ -68,7 +83,22 @@ module.exports = async function handler(req, res) {
                 designation: (body.designation || (existing ? existing.designation : '') || 'सी.ए.').toString()
             };
             await redis.set('accounts', accounts);
-            res.status(200).json({ ok: true, username: key, created: !existing });
+            if (renamedFrom) {
+                // Carry this person's submission for the currently open window over to the new
+                // username (submissions are keyed by window + username). Older windows are history only.
+                try {
+                    const win = await redis.get('window');
+                    if (win && win.windowId) {
+                        const oldK = 'submission:' + win.windowId + ':' + renamedFrom;
+                        const sub = await redis.get(oldK);
+                        if (sub) {
+                            await redis.set('submission:' + win.windowId + ':' + key, sub);
+                            await redis.del(oldK);
+                        }
+                    }
+                } catch (e) { console.error('submission move failed', e); }
+            }
+            res.status(200).json({ ok: true, username: key, created: !existing, renamedFrom });
         } catch (e) {
             console.error('accounts POST failed', e);
             res.status(500).json({ error: 'Failed to save account' });

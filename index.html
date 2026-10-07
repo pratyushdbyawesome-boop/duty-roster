@@ -480,6 +480,79 @@
         #gateErr { color: var(--danger, #ff6b6b); font-size: 12.5px; min-height: 16px; }
         #syncBadge { display: none; position: fixed; right: 10px; bottom: 10px; z-index: 9000; max-width: 300px; padding: 7px 11px; border-radius: 8px; font: 12px 'Inter', sans-serif; cursor: pointer; background: #22343f; color: #e8eef2; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
         #syncBadge.sync-ok { background: #1f4d36; } #syncBadge.sync-warn { background: #e8a33d; color: #1a1a1a; } #syncBadge.sync-err { background: #a32d2d; color: #fff; }
+
+        /* ═══ HOME SUMMARY, TABS, COLLAPSIBLES ═══ */
+        html { -webkit-text-size-adjust: 100%; }
+        html, body { max-width: 100%; overflow-x: clip; }
+        header { padding: 16px 20px 12px; }
+        header h1 { font-size: clamp(22px, 4vw, 30px); margin: 4px 0 2px; }
+        details.about { margin-top: 4px; }
+        details.about summary, details.more summary, details.menu summary, details.panel summary, details.parser-box summary {
+            cursor: pointer; font-size: 13px; color: var(--amber); padding: 6px 0; list-style-position: inside; }
+        details.about p { margin-top: 6px; }
+        .summary-strip { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 20px 0; max-width: 1180px; margin: 0 auto; }
+        .chip { background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: 12.5px; color: var(--paper-dim); }
+        .chip b { color: var(--paper); font-weight: 600; }
+        .chip.warn { border-color: var(--amber); color: var(--amber); }
+        .tabnav { position: sticky; top: 0; z-index: 50; display: flex; gap: 6px; overflow-x: auto; padding: 8px 20px; margin-top: 10px;
+            background: rgba(14,26,34,.96); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); scrollbar-width: none; }
+        .tabnav::-webkit-scrollbar { display: none; }
+        .tabnav button { flex: 0 0 auto; background: transparent; border: 1px solid var(--line); color: var(--paper-dim); border-radius: 999px;
+            padding: 8px 14px; font-size: 14px; min-height: 40px; text-transform: none; letter-spacing: 0; white-space: nowrap; }
+        .tabnav button.active { background: var(--amber); color: #1a1205; border-color: var(--amber); font-weight: 600; }
+        @media (min-width: 701px) { .tabnav { justify-content: center; } }
+        section { margin-top: 18px; }
+        section[hidden-tab] { display: none; }
+        body.tabs-on section[data-tab] { display: none; }
+        body.tabs-on section[data-tab].tab-active { display: block; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px 16px; align-items: end; }
+        .form-grid input, .form-grid select { width: 100%; }
+        details.more, details.panel, details.parser-box { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 4px; }
+        details.panel { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px 12px; margin-top: 10px; }
+        details.panel > summary { font-size: 14px; }
+        .count-badge { display: inline-block; min-width: 20px; text-align: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 0 7px; font-size: 11px; color: var(--teal); }
+        .count-badge:empty { display: none; }
+        .toolbar { flex-wrap: wrap; gap: 8px; }
+        details.menu { position: relative; display: inline-block; }
+        details.menu summary { border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px; color: var(--paper); min-height: 40px; display: inline-flex; align-items: center; }
+        .menu-items { position: absolute; z-index: 20; top: 100%; left: 0; margin-top: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 6px; min-width: 230px; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+        .ann-scroll { max-height: 65vh; overflow: auto; }
+        .count-badge + * { }
+        .tbl-wrap { overflow-x: auto; }
+        .edit-err { color: var(--danger); font-size: 12.5px; min-height: 16px; }
+        .modal { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .modal-box { width: 100%; max-width: 380px; max-height: 90vh; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+        .modal-box input { width: 100%; margin-bottom: 10px; }
+        .modal-box h3 { margin-bottom: 10px; font-family: 'Oswald', sans-serif; }
+        .icon-btn { background: transparent; border: 1px solid var(--line); color: var(--paper); border-radius: 6px; padding: 4px 9px; min-height: 32px; cursor: pointer; }
+        #rosterOutput { overflow-x: auto; }
+        .row > div, .form-grid > div { min-width: 0; }
+        input[type=text], input[type=password], input[type=date], input[type=datetime-local], textarea, select { max-width: 100%; }
+        /* ═══ MOBILE ═══ */
+        @media (max-width: 700px) {
+            main { padding: 0 12px; }
+            header { padding: 12px 12px 8px; }
+            .summary-strip { padding: 8px 12px 0; }
+            .tabnav { padding: 6px 12px; }
+            .card { padding: 12px; }
+            button, .daychip { min-height: 42px; font-size: 14px; }
+            button.small { min-height: 38px; }
+            input[type=text], input[type=password], input[type=date], input[type=datetime-local], select, textarea { font-size: 16px; min-height: 42px; }
+            input[type=checkbox] { width: 20px; height: 20px; }
+            .toolbar > button, .toolbar > details.menu { flex: 1 1 140px; }
+            .toolbar > details.menu summary { width: 100%; justify-content: center; }
+            .menu-items { right: 0; left: 0; }
+            table.grid td.name-cell input { width: 96px !important; min-width: 0 !important; min-height: 36px; font-size: 14px !important; }
+            table.grid td.name-cell { padding-left: 4px; padding-right: 4px; }
+            .ann-scroll { max-height: 70vh; }
+            .toast { left: 12px; right: 12px; bottom: 76px; padding: 12px 14px; }
+            #syncBadge { left: 10px; right: 10px; max-width: none; bottom: 10px; }
+            .form-grid { grid-template-columns: 1fr; }
+            #dcTitle, #dcSubtitle, [id^="dcSig"], #dcStartDate, #dcEndDate { width: 100% !important; }
+            .row input[style*="width"], .row select[style*="width"] { width: 100% !important; }
+            .stat-strip { flex-wrap: wrap; }
+            footer { padding: 16px 12px 80px; }
+        }
     </style>
 </head>
 <body class="locked">
@@ -501,19 +574,34 @@
     <header>
         <div class="eyebrow"><span class="dot"></span> Prasar Bharati · Akashvani Ambikapur</div>
         <h1>Weekly Duty Roster Generator</h1>
+        <details class="about"><summary>ℹ️ How this works</summary>
         <p>Fill availability in the grid below — or paste WhatsApp messages to auto-populate. The tool assigns duties
             fairly, avoiding conflicts, with a bias toward those who've had fewer duties in prior weeks.
             <strong>Always verify the grid before generating.</strong></p>
-        <p style="font-size:11px;color:var(--paper-dim,#999);margin-top:4px;">Build: 2026-10-06 · weighted-duty-balance-v1 + short-format-v1 + duty-chart-v1 + download-fix-v1 + priority-tier-daymajor-v1 + render-on-load-fix-v1 + datepicker-fix-v1 + dedupe-match-fix-v1 + blank-start-v1 + legacy-demo-cleanup-v1 + whatsapp-web-paste-fix-v1 + phonein-first-fix-v1 + ios-bidi-mark-strip-fix-v1 + ios-export-timestamp-fix-v1 + auto-update-sw-v1 + update-banner-optin-v1 + legacy-cleanup-onetime-fix-v1 + online-availability-collection-v1</p>
+
+        <p style="font-size:11px;color:var(--paper-dim,#999);margin-top:4px;">Build: 2026-10-06 · weighted-duty-balance-v1 + short-format-v1 + duty-chart-v1 + download-fix-v1 + priority-tier-daymajor-v1 + render-on-load-fix-v1 + datepicker-fix-v1 + dedupe-match-fix-v1 + blank-start-v1 + legacy-demo-cleanup-v1 + whatsapp-web-paste-fix-v1 + phonein-first-fix-v1 + ios-bidi-mark-strip-fix-v1 + ios-export-timestamp-fix-v1 + auto-update-sw-v1 + update-banner-optin-v1 + legacy-cleanup-onetime-fix-v1 + online-availability-collection-v1 + tabs-collapsible-ui-v1 + server-history-v1 + announcer-edit-v1</p>
+        </details>
     </header>
+
+    <!-- ═══ HOME SUMMARY + TAB NAV ═══ -->
+    <div id="summaryStrip" class="summary-strip"></div>
+    <nav id="tabNav" class="tabnav" aria-label="Sections">
+        <button data-tab="week">⚙️ Week</button>
+        <button data-tab="announcers">👥 Announcers</button>
+        <button data-tab="roster">📋 Roster</button>
+        <button data-tab="history">🕘 History</button>
+        <button data-tab="chart">🗓️ Duty chart</button>
+        <button data-tab="online">🌐 Online</button>
+    </nav>
 
     <main>
 
         <!-- ═══ 1 · WEEK SETUP ═══ -->
-        <section>
-            <div class="section-title">1 · Week Setup</div>
+        <section data-tab="week">
+            <div class="section-title">1 · Week &amp; Settings</div>
+            <div class="section-sub">The week your roster is built for. Used by the WhatsApp parser, roster dates and history. If you collect availability online (Online tab), keep this the same as the window's start date.</div>
             <div class="card">
-                <div class="row">
+                <div class="form-grid">
                     <div>
                         <label>Week starting (Sunday)</label>
                         <input type="date" id="weekStart" />
@@ -524,53 +612,54 @@
                     </div>
                     <div>
                         <label>Duty balance</label>
-                        <div class="daychip" id="balanceToggle" style="cursor:pointer;">
+                        <div class="daychip" id="balanceToggle" style="cursor:pointer;" title="Lean toward people with fewer past duties (not a guarantee)">
                             <input type="checkbox" id="balanceCheck" checked style="pointer-events:none;" />
-                            Lean toward people with fewer past duties (not a guarantee)
+                            Favour fewer past duties
                         </div>
                     </div>
                     <div>
                         <label>Availability priority</label>
-                        <div class="daychip" id="priorityToggle" style="cursor:pointer;">
+                        <div class="daychip" id="priorityToggle" style="cursor:pointer;" title="Lean toward fully‑available announcers over restricted ones (not a guarantee)">
                             <input type="checkbox" id="priorityCheck" checked style="pointer-events:none;" />
-                            Lean toward fully‑available announcers over restricted ones (not a guarantee)
+                            Favour fully‑available
                         </div>
                     </div>
                 </div>
-                <div class="row mt-8" style="align-items:center;">
-                    <span class="text-muted" style="font-size:12px;">📁 Data saved in your browser (localStorage).</span>
-                    <button class="ghost small" id="exportDataBtn">⬇ Export data</button>
-                    <button class="ghost small" id="importDataBtn">⬆ Import data</button>
-                    <input type="file" id="importDataInput" accept=".json" />
-                </div>
+                <div class="text-muted" style="margin-top:8px;">Both options are leanings, not guarantees. Settings and announcers are saved to the server automatically.</div>
+                <details class="more">
+                    <summary>💾 Backup (export / import)</summary>
+                    <div class="toolbar">
+                        <button class="ghost small" id="exportDataBtn">⬇ Export data</button>
+                        <button class="ghost small" id="importDataBtn">⬆ Import data</button>
+                        <input type="file" id="importDataInput" accept=".json" />
+                    </div>
+                </details>
             </div>
         </section>
 
         <!-- ═══ 2 · AVAILABILITY GRID ═══ -->
-        <section>
-            <div class="section-title">2 · Announcer Availability</div>
-            <div class="section-sub">
-                For each day and Sabha, tick the boxes where the announcer is available.
-                The <strong>Phone‑in (Fourth Duty)</strong> column indicates availability for the extra duty slot.
-                Data is auto‑saved to your browser.
-            </div>
+        <section data-tab="announcers">
+            <div class="section-title">2 · Announcers &amp; Availability</div>
             <div class="card">
-                <div class="grid-scroll">
-                    <table class="grid" id="annTable">
-                        <thead><tr id="annHeadRow"></tr></thead>
-                        <tbody id="annBody"></tbody>
-                    </table>
-                </div>
-                <div class="toolbar">
+                <div class="toolbar" style="margin-top:0;">
+                    <button id="toggleAnnListBtn" aria-expanded="false">👥 <span id="annToggleLabel">View announcers</span> <span id="annCountBadge" class="count-badge">0</span></button>
                     <button class="ghost" id="addRowBtn">+ Add announcer</button>
                     <button class="ghost" id="clearAllBtn">Clear all</button>
-                    <span style="flex:1;"></span>
-                    <span class="text-muted" style="align-self:center;">Auto‑saved</span>
+                </div>
+                <div class="text-muted" id="annSummary" style="margin-top:6px;"></div>
+                <div id="annListWrap" class="ann-list-wrap" style="display:none;">
+                    <div class="section-sub" style="margin:10px 0 8px;">Tick the boxes where each announcer is available. <strong>Fourth Duty</strong> is the phone‑in slot. Tap ✎ to edit a name or username. Changes save automatically.</div>
+                    <div class="grid-scroll ann-scroll">
+                        <table class="grid" id="annTable">
+                            <thead><tr id="annHeadRow"></tr></thead>
+                            <tbody id="annBody"></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- parser -->
-                <div class="parser-box">
-                    <label>Quick‑add: paste WhatsApp messages</label>
+                <details class="parser-box" id="parserDetails"><summary>📋 Quick‑add: paste WhatsApp messages</summary>
+                    
                     <textarea id="pasteBox" placeholder="Paste messages like:&#10;[13/07, 22:57] +91 94064 58942: Available all sabhas&#10;[14/07, 02:59] +91 70000 68054: Available afternoon And phone in&#10;Gopesh Bhaiya: *24 July except* *first &amp; second* sabha available"></textarea>
                     <div class="flex-row mt-8">
                         <button id="parseAndAddBtn">Parse &amp; add</button>
@@ -587,20 +676,24 @@
                         <summary style="cursor:pointer;font-size:12px;color:#e8a33d;">🔍 Show parser debug log (what each message was read as)</summary>
                         <pre id="parseDebugLog" style="white-space:pre-wrap;font-size:11px;line-height:1.5;background:rgba(0,0,0,.25);padding:8px;border-radius:6px;margin-top:6px;max-height:300px;overflow-y:auto;">Parse a message list to see the log here.</pre>
                     </details>
-                </div>
+                </details>
             </div>
         </section>
 
         <!-- ═══ 3 · GENERATE ═══ -->
-        <section>
+        <section data-tab="roster">
             <div class="section-title">3 · Generate Roster</div>
             <div class="card">
                 <div class="toolbar">
                     <button id="generateBtn">Generate Roster</button>
                     <button class="ghost" id="regenBtn">Shuffle again</button>
                     <button class="ghost" id="finalizeBtn">Finalise &amp; save to history</button>
-                    <button class="ghost" id="exportBtn">Export CSV</button>
-                    <button class="ghost" id="exportExcelBtn">⬇ Export Excel (formatted)</button>
+                    <details class="menu"><summary>⬇ Export ▾</summary>
+                        <div class="menu-items">
+                            <button class="ghost" id="exportBtn">Export CSV</button>
+                            <button class="ghost" id="exportExcelBtn">⬇ Export Excel (formatted)</button>
+                        </div>
+                    </details>
                 </div>
                 <div class="stat-strip" id="statStrip"></div>
                 <div id="rosterOutput"></div>
@@ -608,9 +701,9 @@
         </section>
 
         <!-- ═══ 4 · HISTORY ═══ -->
-        <section>
+        <section data-tab="history">
             <div class="section-title">4 · Duty History</div>
-            <div class="section-sub">Every week you click "Finalise" gets logged here. Use this to check fairness and to re-download any past week.</div>
+            <div class="section-sub">Every week you "Finalise" is logged here — stored on the server, so it follows you to any device or browser.</div>
             <div class="card">
                 <div class="toolbar">
                     <button class="ghost small" id="exportHistoryBtn">⬇ Export full history (CSV)</button>
@@ -621,7 +714,7 @@
         </section>
 
         <!-- ═══ 5 · SIMPLE DUTY CHART (e.g. Vichar Bindu style) ═══ -->
-        <section>
+        <section data-tab="chart">
             <div class="section-title">5 · Duty Chart Generator</div>
             <div class="section-sub">For simple "one person, one date" charts (like Vichar Bindu) — different from the sabha roster above. Fill this in and download a ready-to-use, already-formatted Excel file every time — no reformatting needed after download.</div>
             <div class="card">
@@ -679,62 +772,73 @@
             </div>
         </section>
 
-        <section>
+        <section data-tab="online">
             <div class="section-title">6 · Online Availability Collection</div>
-            <div class="section-sub">An alternative to pasting WhatsApp messages: give each announcer their own login to <code>login.html</code>, open a window for a specific week, and fetch their locked-in answers straight into the table below once everyone has submitted.</div>
+            <div class="section-sub">An alternative to pasting WhatsApp messages: give each announcer their own login to <code>login.html</code>, open a window for a specific week, and fetch their locked-in answers straight into the Announcers list once everyone has submitted.</div>
             <div class="card">
-                <div class="row" style="align-items:center; flex-wrap:wrap; gap:8px;">
-                    <input type="text" id="oaServerUrl" placeholder="Server URL, e.g. https://your-roster.vercel.app" style="flex:1; min-width:220px;" />
-                    <input type="password" id="oaAdminPin" placeholder="Admin PIN" style="width:120px;" />
-                    <button class="ghost small" id="oaConnectBtn">Connect</button>
-                    <button class="ghost small" id="oaDisconnectBtn" style="display:none;">Disconnect</button>
-                </div>
+                <details class="more" style="margin-top:0;" id="oaConnDetails">
+                    <summary id="oaConnSummary">🔌 Server connection</summary>
+                    <div class="row" style="align-items:center; gap:8px; margin-top:8px;">
+                        <input type="text" id="oaServerUrl" placeholder="Server URL, e.g. https://your-roster.vercel.app" style="flex:1; min-width:200px;" />
+                        <input type="password" id="oaAdminPin" placeholder="Admin PIN" style="width:120px;" />
+                        <button class="ghost small" id="oaConnectBtn">Connect</button>
+                        <button class="ghost small" id="oaDisconnectBtn" style="display:none;">Lock &amp; disconnect</button>
+                    </div>
+                </details>
                 <div class="muted" id="oaStatus" style="margin-top:8px; font-size:12px;">🌐 Not connected.</div>
 
-                <div id="oaPanels" style="display:none; margin-top:18px;">
-
-                    <!-- Announcer accounts -->
-                    <h4 style="margin-bottom:6px;">Announcer accounts</h4>
-                    <div id="oaAccountsTableWrap"></div>
-                    <div class="row" style="margin-top:10px; flex-wrap:wrap; gap:8px; align-items:flex-end;">
-                        <div><label>Username</label><input type="text" id="oaNewUsername" style="width:130px;"></div>
-                        <div><label>Password</label><input type="password" id="oaNewPassword" style="width:130px;"></div>
-                        <div><label>Display name</label><input type="text" id="oaNewDisplayName" style="width:160px;"></div>
-                        <div>
-                            <label>Designation</label>
-                            <select id="oaNewDesignation" style="width:120px;"></select>
-                        </div>
-                        <button id="oaAddAccountBtn">+ Add account</button>
-                    </div>
+                <div id="oaPanels" style="display:none; margin-top:14px;">
 
                     <!-- Availability window -->
-                    <h4 style="margin:22px 0 6px 0;">Availability request</h4>
-                    <div id="oaCurrentWindow" class="muted" style="font-size:12.5px; margin-bottom:10px;"></div>
-                    <div class="row" style="flex-wrap:wrap; gap:10px; align-items:flex-end;">
-                        <div>
-                            <label>Week starting (Sunday)</label>
-                            <input type="date" id="oaFromDate">
+                    <details class="panel" open>
+                        <summary>📅 Open an availability window <span id="oaWinBadge" class="count-badge"></span></summary>
+                        <div id="oaCurrentWindow" class="muted" style="font-size:12.5px; margin:8px 0;"></div>
+                        <div id="oaWeekHint" style="display:none;"></div>
+                        <div class="form-grid">
+                            <div>
+                                <label>Week starting (Sunday)</label>
+                                <input type="date" id="oaFromDate">
+                            </div>
+                            <div>
+                                <label>Submit by (deadline)</label>
+                                <input type="datetime-local" id="oaDeadline">
+                            </div>
+                            <div>
+                                <label>Label (optional)</label>
+                                <input type="text" id="oaLabel" placeholder="e.g. Week of 5 Oct">
+                            </div>
                         </div>
-                        <div>
-                            <label>Submit by (deadline)</label>
-                            <input type="datetime-local" id="oaDeadline">
-                        </div>
-                        <div style="flex:1; min-width:160px;">
-                            <label>Label (optional)</label>
-                            <input type="text" id="oaLabel" placeholder="e.g. Week of 5 Oct">
-                        </div>
-                        <button id="oaOpenWindowBtn">Open new window</button>
-                    </div>
-                    <div class="muted" style="font-size:11.5px; margin-top:6px;">Opening a new window resets every announcer back to unlocked/blank for that new week — last week's answers stay safely out of the way, they're just no longer the active one.</div>
+                        <div class="toolbar"><button id="oaOpenWindowBtn">Open new window</button></div>
+                        <div class="muted" style="font-size:11.5px;">Opening a new window resets every announcer to unlocked/blank for that week — last week's answers stay safely out of the way.</div>
+                    </details>
 
                     <!-- Status + fetch -->
-                    <h4 style="margin:22px 0 6px 0;">Submission status</h4>
-                    <div id="oaStatusTableWrap"></div>
-                    <div class="toolbar" style="margin-top:12px;">
-                        <button id="oaRefreshStatusBtn" class="ghost">🔄 Refresh status</button>
-                        <button id="oaFetchBtn">⬇ Fetch locked-in availability into table above</button>
-                    </div>
-                    <div id="oaFetchResult" class="muted" style="margin-top:8px; font-size:12.5px;"></div>
+                    <details class="panel">
+                        <summary>📥 Submission status <span id="oaStatusBadge" class="count-badge"></span></summary>
+                        <div id="oaStatusTableWrap" class="tbl-wrap" style="margin-top:8px;"></div>
+                        <div class="toolbar">
+                            <button id="oaRefreshStatusBtn" class="ghost">🔄 Refresh status</button>
+                            <button id="oaFetchBtn">⬇ Fetch locked‑in availability into the Announcers list</button>
+                        </div>
+                        <div id="oaFetchResult" class="muted" style="font-size:12.5px;"></div>
+                    </details>
+
+                    <!-- Announcer accounts -->
+                    <details class="panel">
+                        <summary>🔑 Announcer logins <span id="oaAccBadge" class="count-badge"></span></summary>
+                        <div id="oaAccountsTableWrap" class="tbl-wrap" style="margin-top:8px;"></div>
+                        <h4 style="margin:14px 0 6px;">Add a new login</h4>
+                        <div class="form-grid">
+                            <div><label>Username</label><input type="text" id="oaNewUsername" autocapitalize="none"></div>
+                            <div><label>Password</label><input type="password" id="oaNewPassword"></div>
+                            <div><label>Display name</label><input type="text" id="oaNewDisplayName"></div>
+                            <div>
+                                <label>Designation</label>
+                                <select id="oaNewDesignation"></select>
+                            </div>
+                        </div>
+                        <div class="toolbar"><button id="oaAddAccountBtn">+ Add account</button></div>
+                    </details>
                 </div>
             </div>
         </section>
@@ -745,6 +849,26 @@
         Changes to this roster are not valid without approval from the competent authority.
         This tool produces a draft assignment — review before publication.
     </footer>
+
+    <!-- ═══ EDIT ANNOUNCER MODAL ═══ -->
+    <div id="editModal" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+        <div class="modal-box">
+            <h3 id="editTitle">Edit announcer</h3>
+            <label for="editName">Name</label>
+            <input type="text" id="editName" autocomplete="off" />
+            <div id="editUserWrap" style="display:none;">
+                <label for="editUsername">Username (login)</label>
+                <input type="text" id="editUsername" autocomplete="off" autocapitalize="none" />
+                <div class="text-muted" id="editUserNote" style="margin-bottom:8px;"></div>
+            </div>
+            <div class="text-muted" style="margin-bottom:10px;">Duty history and past rosters move to the new name automatically.</div>
+            <div id="editErr" class="edit-err"></div>
+            <div class="toolbar" style="margin-top:6px;">
+                <button id="editSaveBtn">Save</button>
+                <button class="ghost" id="editCancelBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ═══ TOAST ═══ -->
     <div class="toast" id="toast"></div>
@@ -946,9 +1070,8 @@
                     designation: a.designation || 'सी.ए.',
                     avail: a.avail,
                     phoneIn: a.phoneIn
-                })),
-                history: state.history,
-                rosterLog: state.rosterLog
+                }))
+                // duty history / past rosters live in their own server record (/api/history)
             };
         }
 
@@ -964,6 +1087,7 @@
             const data = buildSaveData();
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) { console.warn('Local save failed', e); }
             sync.dirty = true;
+            try { renderSummary(); } catch (e) {}
             if (!sync.ready) { setSyncBadge('warn', '⚠ Not synced — changes are only on this device. Tap to retry.'); return; }
             setSyncBadge('busy', '⏳ Saving…');
             clearTimeout(sync.timer);
@@ -1008,8 +1132,11 @@
             state.balanceDuties = data.balanceDuties !== undefined ? data.balanceDuties : true;
             state.priorityMode = data.priorityMode !== undefined ? data.priorityMode : true;
             state.announcers = data.announcers || [];
-            state.history = data.history || {};
-            state.rosterLog = data.rosterLog || [];
+            // Older versions kept history inside this blob. Remember it once so it can be moved
+            // to the dedicated server record (see loadHistory); never used after that.
+            if ((data.history && Object.keys(data.history).length) || (data.rosterLog && data.rosterLog.length)) {
+                legacyHistory = { history: data.history || {}, rosterLog: data.rosterLog || [] };
+            }
             state.announcers.forEach(a => {
                 if (!a.avail) a.avail = emptyAvail();
                 for (let d = 0; d < 7; d++) {
@@ -1025,7 +1152,52 @@
         }
 
         // Returns true if any saved data was loaded. Server wins when reachable.
+        // ── Duty history: stored ONLY on the server (/api/history). The local copy below is a
+        //    read-only cache so fairness counts still work when offline; it is never the source of truth.
+        const HISTORY_CACHE_KEY = 'duty-history-cache';
+        let legacyHistory = null;
+
+        function applyHistory(d) {
+            state.history = (d && d.history) || {};
+            state.rosterLog = (d && d.rosterLog) || [];
+            try { localStorage.setItem(HISTORY_CACHE_KEY, JSON.stringify({ history: state.history, rosterLog: state.rosterLog })); } catch (e) {}
+            renderHistoryPanel();
+            renderSummary();
+        }
+
+        async function historyCall(body) {
+            const out = await oaApi('/api/history', 'POST', body, oaAdminHeaders());
+            applyHistory(out.data);
+            return out.data;
+        }
+
+        async function loadHistory() {
+            try {
+                const out = await oaApi('/api/history', 'GET', undefined, oaAdminHeaders());
+                if (out.data) { applyHistory(out.data); return; }
+                const lg = legacyHistory;
+                if (lg && (Object.keys(lg.history || {}).length || (lg.rosterLog || []).length)) {
+                    await historyCall({ op: 'replace', history: lg.history || {}, rosterLog: lg.rosterLog || [] });
+                    toast('Existing duty history moved to the server');
+                } else {
+                    applyHistory({ history: {}, rosterLog: [] });
+                }
+            } catch (e) {
+                try {
+                    const c = JSON.parse(localStorage.getItem(HISTORY_CACHE_KEY) || 'null') || legacyHistory;
+                    if (c) { state.history = c.history || {}; state.rosterLog = c.rosterLog || []; }
+                } catch (_) {}
+                toast('⚠ Duty history could not be loaded from the server — showing the last known copy. Changing history is disabled until the server is reachable.');
+            }
+        }
+
         async function loadState() {
+            const r = await loadStateCore();
+            await loadHistory();
+            return r;
+        }
+
+        async function loadStateCore() {
             const local = readLocalCache();
             let server;
             try {
@@ -1077,6 +1249,148 @@
         window.addEventListener('online', () => { if (sync.dirty) retrySync(); });
         document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSync({ keepalive: true }); });
         window.addEventListener('beforeunload', (e) => { if (sync.dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  EDIT ANNOUNCER (name / username)
+        //  Names are the key for duty history AND the link between a roster
+        //  row and its online login (matched by display name), so a rename is
+        //  applied everywhere together: login account (server) → duty history
+        //  (server) → roster row (local/server roster-data).
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        let oaAccounts = [];
+        let oaAccountsLoaded = false;
+        let oaWindow = null;
+
+        function findAccountForName(name) {
+            const k = normalizeNameForMatch(name);
+            return oaAccounts.find(a => normalizeNameForMatch(a.displayName) === k) || null;
+        }
+
+        async function applyAnnouncerEdit(ctx) {
+            const newName = (ctx.newName || '').trim();
+            if (!newName) throw new Error('Name cannot be empty');
+            const oldName = ctx.oldName;
+            const ann = state.announcers.find(a => a.id === ctx.annId) ||
+                state.announcers.find(a => normalizeNameForMatch(a.name) === normalizeNameForMatch(oldName));
+            const nameChanged = newName !== oldName;
+            const newUser = (ctx.newUsername || '').trim().toLowerCase();
+            const userChanged = !!(ctx.account && newUser && newUser !== ctx.account.username);
+            if (nameChanged && state.announcers.some(a => a !== ann && normalizeNameForMatch(a.name) === normalizeNameForMatch(newName))) {
+                throw new Error('Another announcer already has that name');
+            }
+            if (userChanged && /\s/.test(newUser)) throw new Error('Username cannot contain spaces');
+            if (!nameChanged && !userChanged) return false;
+
+            // 1. login account on the server (it enforces unique usernames — fail before changing anything else)
+            if (ctx.account) {
+                await oaApi('/api/accounts', 'POST', {
+                    username: ctx.account.username, update: true,
+                    displayName: newName,
+                    newUsername: userChanged ? newUser : undefined
+                }, oaAdminHeaders());
+            }
+            // 2. duty history (counts + past rosters) on the server — skipped if another row still uses the old name
+            if (nameChanged) {
+                const stillUsed = state.announcers.some(a => a !== ann && a.name === oldName);
+                const hasHistory = Object.prototype.hasOwnProperty.call(state.history, oldName) ||
+                    state.rosterLog.some(w => (w.slots || []).some(sl => sl.name === oldName));
+                if (hasHistory && !stillUsed) {
+                    try { await historyCall({ op: 'rename', from: oldName, to: newName }); }
+                    catch (e) { throw new Error((ctx.account ? 'The login was updated, but d' : 'D') + 'uty history could not be renamed (' + e.message + '). Please try the edit again.'); }
+                }
+            }
+            // 3. the roster row itself
+            if (ann && nameChanged) ann.name = newName;
+            saveState();
+            renderAnnTable();
+            renderHistoryPanel();
+            if (ctx.account) { await oaRefreshAccounts(); oaRefreshStatus(); }
+            return true;
+        }
+
+        let editCtx = null;
+        async function openEditModal(ctx) {
+            if (oaConfig().enabled && !oaAccountsLoaded) await oaRefreshAccounts();
+            const account = ctx.account || findAccountForName(ctx.name);
+            editCtx = { annId: ctx.annId, oldName: ctx.name, account };
+            document.getElementById('editName').value = ctx.name;
+            const uw = document.getElementById('editUserWrap');
+            uw.style.display = account ? '' : 'none';
+            if (account) {
+                document.getElementById('editUsername').value = account.username;
+                document.getElementById('editUserNote').textContent = 'Linked login. If you change the username, tell them to log in with the new one.';
+            }
+            document.getElementById('editErr').textContent = '';
+            document.getElementById('editModal').style.display = 'flex';
+            document.getElementById('editName').focus();
+        }
+        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; editCtx = null; }
+        async function saveEditModal() {
+            if (!editCtx) return;
+            const btn = document.getElementById('editSaveBtn');
+            btn.disabled = true; btn.textContent = 'Saving…';
+            try {
+                const changed = await applyAnnouncerEdit({
+                    annId: editCtx.annId, oldName: editCtx.oldName, account: editCtx.account,
+                    newName: document.getElementById('editName').value,
+                    newUsername: document.getElementById('editUsername').value
+                });
+                closeEditModal();
+                toast(changed ? 'Saved' : 'No changes');
+            } catch (e) {
+                document.getElementById('editErr').textContent = e.message;
+            } finally { btn.disabled = false; btn.textContent = 'Save'; }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  HOME SUMMARY, TABS, COLLAPSIBLE ANNOUNCER LIST
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function renderSummary() {
+            const strip = document.getElementById('summaryStrip');
+            if (!strip) return;
+            const n = state.announcers.length;
+            const marked = state.announcers.filter(a => a.phoneIn || DAYS.some((_, d) => a.avail && a.avail[d] && SABHAS.some(sb => a.avail[d][sb.key]))).length;
+            const last = state.rosterLog.length ? state.rosterLog[state.rosterLog.length - 1] : null;
+            const chips = [];
+            chips.push('<span class="chip">Week: <b>' + escapeHtml(state.weekStart || 'not set') + '</b></span>');
+            chips.push('<span class="chip">Announcers: <b>' + n + '</b></span>');
+            if (oaConfig().enabled) {
+                chips.push('<span class="chip' + (oaWindow ? '' : ' warn') + '">Online window: <b>' + (oaWindow ? escapeHtml(oaWindow.fromDate + ' → ' + oaWindow.toDate) : 'none open') + '</b></span>');
+            }
+            chips.push('<span class="chip">Last finalised: <b>' + (last ? escapeHtml(last.weekStart || 'no date') : '—') + '</b></span>');
+            strip.innerHTML = chips.join('');
+            const badge = document.getElementById('annCountBadge'); if (badge) badge.textContent = n;
+            const sum = document.getElementById('annSummary');
+            if (sum) sum.textContent = n === 0 ? 'No announcers yet — add one, paste WhatsApp messages, or fetch from the Online tab.'
+                : n + ' announcer' + (n === 1 ? '' : 's') + ' · ' + marked + ' with availability marked';
+            oaUpdateWeekHint();
+        }
+
+        function setAnnListOpen(open) {
+            document.getElementById('annListWrap').style.display = open ? '' : 'none';
+            document.getElementById('annToggleLabel').textContent = open ? 'Hide announcers ▴' : 'View announcers ▾';
+            document.getElementById('toggleAnnListBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+
+        const TABS = ['week', 'announcers', 'roster', 'history', 'chart', 'online'];
+        function showTab(name, noScroll) {
+            if (!TABS.includes(name)) name = 'week';
+            document.querySelectorAll('section[data-tab]').forEach(sec => sec.classList.toggle('tab-active', sec.dataset.tab === name));
+            document.querySelectorAll('#tabNav button').forEach(b => {
+                const on = b.dataset.tab === name;
+                b.classList.toggle('active', on);
+                if (on && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'center' });
+            });
+            try { sessionStorage.setItem('active-tab', name); history.replaceState(null, '', '#' + name); } catch (e) {}
+            if (!noScroll) window.scrollTo(0, 0);
+        }
+        function initTabs() {
+            document.body.classList.add('tabs-on');
+            document.querySelectorAll('#tabNav button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+            let t = (location.hash || '').slice(1);
+            if (!TABS.includes(t)) { try { t = sessionStorage.getItem('active-tab'); } catch (e) {} }
+            showTab(t, true);
+        }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  TOAST
@@ -1141,7 +1455,11 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  RENDER: availability grid
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        function renderAnnTable() {
+        let inlineRenameBusy = false;
+
+        function renderAnnTable() { renderAnnTableCore(); renderSummary(); }
+
+        function renderAnnTableCore() {
             const head = document.getElementById('annHeadRow');
             head.innerHTML = '<th style="position:sticky;left:0;z-index:2;">Announcer</th>' +
                 DAYS_SHORT.map(d => `<th colspan="3" class="sabha-group">${d}</th>`).join('') +
@@ -1160,7 +1478,7 @@
             state.announcers.forEach(ann => {
                 const tr = document.createElement('tr');
                 let cells =
-                    `<td class="name-cell"><input type="text" value="${escapeHtml(ann.name)}" data-id="${ann.id}" data-field="name" style="width:130px;background:transparent;border:none;color:var(--paper);font-weight:600;font-size:13px;"></td>`;
+                    `<td class="name-cell"><div style="display:flex;align-items:center;gap:4px;"><input type="text" value="${escapeHtml(ann.name)}" data-id="${ann.id}" data-field="name" style="width:130px;background:transparent;border:none;color:var(--paper);font-weight:600;font-size:13px;"><button class="icon-btn" data-id="${ann.id}" data-action="edit" title="Edit name / username" aria-label="Edit ${escapeHtml(ann.name)}">✎</button></div></td>`;
                 DAYS.forEach((_, di) => {
                     SABHAS.forEach((s, si) => {
                         const checked = ann.avail[di] && ann.avail[di][s.key] ? 'checked' : '';
@@ -1202,13 +1520,23 @@
             body.querySelectorAll('input[data-field="name"]').forEach(inp => {
                 const saveName = () => {
                     const ann = state.announcers.find(a => a.id === inp.dataset.id);
-                    if (ann) {
-                        ann.name = inp.value.trim() || 'Unnamed';
-                        saveState();
-                    }
+                    if (!ann || inlineRenameBusy) return;
+                    const oldName = ann.name, newName = inp.value.trim() || 'Unnamed';
+                    if (newName === oldName) return;
+                    // Goes through the shared rename so duty history and any linked login follow the new name.
+                    inlineRenameBusy = true;
+                    applyAnnouncerEdit({ annId: ann.id, oldName, newName, account: findAccountForName(oldName) })
+                        .catch(e => { toast('Rename failed: ' + e.message); inp.value = oldName; })
+                        .finally(() => { inlineRenameBusy = false; });
                 };
                 inp.addEventListener('change', saveName);
                 inp.addEventListener('blur', saveName);
+            });
+            body.querySelectorAll('[data-action="edit"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const ann = state.announcers.find(a => a.id === btn.dataset.id);
+                    if (ann) openEditModal({ annId: ann.id, name: ann.name });
+                });
             });
             body.querySelectorAll('select[data-field="designation"]').forEach(sel => {
                 sel.addEventListener('change', e => {
@@ -2154,33 +2482,37 @@
                 .sort((a, b) => b.count - a.count);
 
             let html = '';
+            html += '<div class="text-muted" style="margin-bottom:6px;">' + state.rosterLog.length + ' finalised week' + (state.rosterLog.length === 1 ? '' : 's') + ' · ' + rows.length + ' announcer' + (rows.length === 1 ? '' : 's') + ' with duties · stored on the server</div>';
+
+            html += '<details class="panel"><summary>📊 Total duties per announcer <span class="count-badge">' + rows.length + '</span></summary>';
             if (rows.length === 0) {
-                html += '<p style="color:var(--paper-dim);font-size:13px;">No duties finalised yet. Once you click "Finalise & save to history", counts will appear here.</p>';
+                html += '<p style="color:var(--paper-dim);font-size:13px;margin-top:8px;">No duties finalised yet. Once you click "Finalise & save to history", counts will appear here.</p>';
             } else {
-                html += '<table class="grid" style="margin-bottom:18px;"><thead><tr><th>Announcer</th><th>Total duties (all time)</th></tr></thead><tbody>';
+                html += '<div class="tbl-wrap"><table class="grid" style="margin-top:8px;"><thead><tr><th>Announcer</th><th>Total duties (all time)</th></tr></thead><tbody>';
                 rows.forEach(r => {
                     html += `<tr><td style="text-align:left;">${escapeHtml(r.name)}</td><td>${r.count}</td></tr>`;
                 });
-                html += '</tbody></table>';
+                html += '</tbody></table></div>';
             }
+            html += '</details>';
 
-            // ── past finalised weeks, newest first ──
+            html += '<details class="panel"><summary>🗂️ Past weeks <span class="count-badge">' + state.rosterLog.length + '</span></summary>';
             if (state.rosterLog.length === 0) {
-                html += '<p style="color:var(--paper-dim);font-size:13px;">No past weeks logged yet.</p>';
+                html += '<p style="color:var(--paper-dim);font-size:13px;margin-top:8px;">No past weeks logged yet.</p>';
             } else {
-                html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+                html += '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">';
                 state.rosterLog.slice().reverse().forEach((week, i) => {
                     const idx = state.rosterLog.length - 1 - i;
                     const label = week.weekStart ? week.weekStart : '(no date set)';
                     html += `
-                        <details style="background:var(--panel-2);border-radius:8px;padding:8px 12px;">
-                            <summary style="cursor:pointer;font-size:13px;">Week of ${label} — ${week.slots.filter(s=>s.name).length}/${week.slots.length} filled</summary>
-                            <table class="grid" style="margin-top:8px;">
+                        <details style="background:var(--ink);border-radius:8px;padding:8px 12px;">
+                            <summary style="cursor:pointer;font-size:13px;">Week of ${escapeHtml(label)} — ${week.slots.filter(s=>s.name).length}/${week.slots.length} filled</summary>
+                            <div class="tbl-wrap"><table class="grid" style="margin-top:8px;">
                                 <thead><tr><th>Day</th><th>Duty</th><th>Assigned to</th></tr></thead>
                                 <tbody>
                                     ${week.slots.map(s => `<tr><td>${DAYS_HI[s.day]}</td><td>${escapeHtml(s.label)}</td><td>${s.name ? escapeHtml(s.name) : '<em>unfilled</em>'}</td></tr>`).join('')}
                                 </tbody>
-                            </table>
+                            </table></div>
                             <div class="toolbar" style="margin-top:8px;">
                                 <button class="ghost small" data-week-idx="${idx}" onclick="exportSingleHistoryWeek(${idx})">⬇ Export this week (CSV)</button>
                             </div>
@@ -2188,6 +2520,7 @@
                 });
                 html += '</div>';
             }
+            html += '</details>';
 
             panel.innerHTML = html;
         }
@@ -2277,8 +2610,6 @@
                         avail: a.avail || emptyAvail(),
                         designation: a.designation || 'सी.ए.'
                     }));
-                    state.history = data.history || {};
-                    state.rosterLog = data.rosterLog || [];
                     state.lastRoster = null;
                     if (state.weekStart) document.getElementById('weekStart').value = state.weekStart;
                     document.getElementById('balanceCheck').checked = state.balanceDuties;
@@ -2290,6 +2621,11 @@
                     renderHistoryPanel();
                     saveState();
                     toast('Data imported successfully');
+                    // Duty history is server-side now: only replace it if the file actually contains history.
+                    if (data.history || data.rosterLog) {
+                        historyCall({ op: 'replace', history: data.history || {}, rosterLog: data.rosterLog || [] })
+                            .catch(e => toast('⚠ Imported, but duty history could not be saved to the server: ' + e.message));
+                    }
                 } catch (err) {
                     toast('Error importing data: ' + err.message);
                 }
@@ -2391,6 +2727,8 @@
             try {
                 const data = await oaApi('/api/accounts', 'GET', undefined, oaAdminHeaders());
                 const wrap = document.getElementById('oaAccountsTableWrap');
+                oaAccounts = data.accounts; oaAccountsLoaded = true;
+                document.getElementById('oaAccBadge').textContent = data.accounts.length || '';
                 if (data.accounts.length === 0) {
                     wrap.innerHTML = '<div class="muted" style="font-size:12.5px;">No announcer accounts yet — add one below.</div>';
                     return;
@@ -2398,10 +2736,16 @@
                 let html = '<table class="grid"><thead><tr><th>Username</th><th>Display name</th><th>Designation</th><th></th></tr></thead><tbody>';
                 data.accounts.forEach((a) => {
                     html += '<tr><td>' + escapeHtml(a.username) + '</td><td>' + escapeHtml(a.displayName) + '</td><td>' + escapeHtml(a.designation) + '</td>' +
-                        '<td style="white-space:nowrap;"><button class="ghost small" data-edit-account="' + escapeHtml(a.username) + '">Reset password</button> <button class="ghost small" data-remove-account="' + escapeHtml(a.username) + '">Remove</button></td></tr>';
+                        '<td style="white-space:nowrap;"><button class="ghost small" data-edit-name="' + escapeHtml(a.username) + '">✎ Edit</button> <button class="ghost small" data-edit-account="' + escapeHtml(a.username) + '">Reset password</button> <button class="ghost small" data-remove-account="' + escapeHtml(a.username) + '">Remove</button></td></tr>';
                 });
                 html += '</tbody></table>';
                 wrap.innerHTML = html;
+                wrap.querySelectorAll('[data-edit-name]').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        const acc = oaAccounts.find(x => x.username === btn.getAttribute('data-edit-name'));
+                        if (acc) openEditModal({ name: acc.displayName, account: acc });
+                    });
+                });
                 wrap.querySelectorAll('[data-edit-account]').forEach((btn) => {
                     btn.addEventListener('click', async function () {
                         const username = this.getAttribute('data-edit-account');
@@ -2467,6 +2811,9 @@
         async function oaRefreshWindow() {
             try {
                 const data = await oaApi('/api/window', 'GET');
+                oaWindow = data.window || null;
+                document.getElementById('oaWinBadge').textContent = oaWindow ? 'open' : 'none';
+                renderSummary();
                 const el = document.getElementById('oaCurrentWindow');
                 if (!data.window) {
                     el.textContent = 'No availability request is currently open.';
@@ -2510,6 +2857,8 @@
                 const data = await oaApi('/api/fetch-all', 'GET', undefined, oaAdminHeaders());
                 oaLatestFetch = data;
                 const wrap = document.getElementById('oaStatusTableWrap');
+                const lockedN = data.people.filter(p => p.submission && p.submission.locked).length;
+                document.getElementById('oaStatusBadge').textContent = data.window ? (lockedN + '/' + data.people.length + ' locked') : '';
                 if (data.people.length === 0) {
                     wrap.innerHTML = '<div class="muted" style="font-size:12.5px;">No announcer accounts yet.</div>';
                     return;
@@ -2609,7 +2958,27 @@
             }
         }
 
+        // Section 1 (roster week) and the online window both describe "which week". They are kept
+        // separate (the WhatsApp workflow needs a week without any window), but if they disagree we say so.
+        function oaUpdateWeekHint() {
+            const el = document.getElementById('oaWeekHint');
+            if (!el) return;
+            if (oaWindow && state.weekStart && oaWindow.fromDate !== state.weekStart) {
+                el.style.display = '';
+                el.innerHTML = '<div class="chip warn" style="border-radius:8px;margin:6px 0 10px;">⚠ The roster week (Week tab) is <b>' + escapeHtml(state.weekStart) + '</b> but the open window starts <b>' + escapeHtml(oaWindow.fromDate) + '</b>. ' +
+                    '<button class="ghost small" id="oaSyncWeekBtn">Use the window\'s week for the roster</button></div>';
+                document.getElementById('oaSyncWeekBtn').addEventListener('click', () => {
+                    state.weekStart = oaWindow.fromDate;
+                    document.getElementById('weekStart').value = state.weekStart;
+                    saveState();
+                    toast('Roster week set to ' + state.weekStart);
+                });
+            } else { el.style.display = 'none'; el.innerHTML = ''; }
+        }
+
         function oaInit() {
+            const fromEl = document.getElementById('oaFromDate');
+            if (fromEl && !fromEl.value && state.weekStart) fromEl.value = state.weekStart;
             const cfg = oaConfig();
             const designationSelect = document.getElementById('oaNewDesignation');
             designationSelect.innerHTML = DESIGNATIONS.map((d) => '<option value="' + escapeHtml(d) + '">' + escapeHtml(d) + '</option>').join('');
@@ -2889,18 +3258,14 @@
             });
 
             // ── finalise ──
-            document.getElementById('finalizeBtn').addEventListener('click', function() {
+            document.getElementById('finalizeBtn').addEventListener('click', async function() {
                 if (!state.lastRoster) { toast('Generate a roster first'); return; }
-                let count = 0;
-                state.lastRoster.forEach(a => {
-                    if (a.announcer) {
-                        state.history[a.announcer.name] = (state.history[a.announcer.name] || 0) + 1;
-                        count++;
-                    }
-                });
-                // Snapshot this week into the log (name only, so it still reads
-                // fine even if that announcer is later renamed or removed).
-                state.rosterLog.push({
+                const btn = this;
+                if (btn.disabled) return;
+                const count = state.lastRoster.filter(a => a.announcer).length;
+                // Snapshot this week (name only, so it still reads fine even if that announcer
+                // is later removed). The server adds +1 per filled slot and appends the week.
+                const week = {
                     weekStart: state.weekStart,
                     finalizedAt: new Date().toISOString(),
                     slots: state.lastRoster.map(a => ({
@@ -2910,22 +3275,23 @@
                         label: a.label,
                         name: a.announcer ? a.announcer.name : null
                     }))
-                });
-                // keep last 52 weeks (~1 year) so localStorage doesn't grow forever
-                if (state.rosterLog.length > 52) state.rosterLog = state.rosterLog.slice(-52);
-                saveState();
-                renderHistoryPanel();
-                toast(`Finalised ${count} duties (saved to history)`);
+                };
+                btn.disabled = true;
+                try {
+                    await historyCall({ op: 'finalize', week });
+                    toast(`Finalised ${count} duties (saved to server history)`);
+                } catch (e) {
+                    toast('⚠ NOT saved — could not reach the server: ' + e.message + '. Your roster is still on screen; try Finalise again.');
+                } finally { btn.disabled = false; }
             });
 
             document.getElementById('exportHistoryBtn').addEventListener('click', exportHistoryCSV);
-            document.getElementById('clearHistoryBtn').addEventListener('click', function() {
+            document.getElementById('clearHistoryBtn').addEventListener('click', async function() {
                 if (!confirm('Clear all duty history counts? This cannot be undone.')) return;
-                state.history = {};
-                state.rosterLog = [];
-                saveState();
-                renderHistoryPanel();
-                toast('History cleared');
+                try {
+                    await historyCall({ op: 'clear' });
+                    toast('History cleared');
+                } catch (e) { toast('⚠ Could not clear history on the server: ' + e.message); }
             });
 
             // ── export CSV ──
@@ -2954,6 +3320,23 @@
             document.getElementById('oaRefreshStatusBtn').addEventListener('click', oaRefreshStatus);
             document.getElementById('oaFetchBtn').addEventListener('click', oaFetchIntoRoster);
             document.getElementById('syncBadge').addEventListener('click', retrySync);
+            document.getElementById('toggleAnnListBtn').addEventListener('click', function () {
+                setAnnListOpen(document.getElementById('annListWrap').style.display === 'none');
+            });
+            // open the list before the existing handler runs so a newly added row is visible/focusable
+            document.getElementById('addRowBtn').addEventListener('click', () => setAnnListOpen(true), true);
+            document.getElementById('parseAndAddBtn').addEventListener('click', () => setAnnListOpen(true));
+            document.getElementById('parseReplaceBtn').addEventListener('click', () => setAnnListOpen(true));
+            document.getElementById('editSaveBtn').addEventListener('click', saveEditModal);
+            document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
+            document.getElementById('editModal').addEventListener('click', e => { if (e.target.id === 'editModal') closeEditModal(); });
+            document.getElementById('editModal').addEventListener('keydown', e => {
+                if (e.key === 'Escape') closeEditModal();
+                if (e.key === 'Enter' && e.target.tagName === 'INPUT') saveEditModal();
+            });
+            document.addEventListener('click', e => { document.querySelectorAll('details.menu[open]').forEach(d => { if (!d.contains(e.target)) d.removeAttribute('open'); }); });
+            initTabs();
+            renderSummary();
             oaInit();
 
         }

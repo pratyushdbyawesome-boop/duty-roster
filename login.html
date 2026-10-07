@@ -80,6 +80,15 @@
         font-size: 13px;
     }
     .window-banner .label { color: var(--amber); font-weight: 600; margin-bottom: 4px; }
+    .quick-row { display: flex; gap: 8px; margin: 4px 0 8px; }
+    .quick-row button { flex: 1; min-height: 44px; font-size: 14px; }
+    .grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    @media (max-width: 480px) {
+        table.grid th, table.grid td { padding: 6px 0; }
+        table.grid th { font-size: 10px; }
+        table.grid td.sabha-label { font-size: 11px; padding-left: 4px; }
+        table.grid input[type=checkbox] { width: 20px; height: 20px; }
+    }
     table.grid { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12.5px; }
     table.grid th, table.grid td { border: 1px solid var(--line); text-align: center; padding: 7px 2px; }
     table.grid th { color: var(--paper-dim); font-weight: 500; font-size: 11px; }
@@ -146,7 +155,11 @@
         </div>
 
         <div id="editView">
-            <table class="grid" id="availGrid"></table>
+            <div class="quick-row">
+                <button type="button" class="btn-ghost" id="selectAllBtn">✓ Select all</button>
+                <button type="button" class="btn-ghost" id="notAvailBtn">✕ Not available</button>
+            </div>
+            <div class="grid-wrap"><table class="grid" id="availGrid"></table></div>
 
             <div class="phonein-row">
                 <input type="checkbox" id="phoneInCheck" />
@@ -287,7 +300,18 @@
         }
     }
 
+    // Quick-fill helpers. "Select all" ticks every sabha on every day (Fourth Duty is left as the
+    // person set it); "Not available" clears every sabha AND Fourth Duty. Both go through the normal
+    // change/auto-save path, so nothing about saving or locking differs from ticking boxes by hand.
+    function setAllAvail(on, alsoPhoneIn) {
+        document.querySelectorAll('#availGrid input[type="checkbox"]').forEach((cb) => { cb.checked = on; });
+        if (alsoPhoneIn) document.getElementById('phoneInCheck').checked = false;
+        onFormChanged();
+    }
+
     async function lockIt() {
+        const anyTicked = Array.from(document.querySelectorAll('#availGrid input[type="checkbox"]')).some((cb) => cb.checked);
+        if (!anyTicked && !confirm('You have not ticked any sabha, so this will be recorded as NOT AVAILABLE for the whole week. Continue?')) return;
         if (!confirm('Lock in your availability? You will not be able to change it yourself after this — the admin would need to unlock it for you.')) return;
         try {
             const avail = readGridIntoAvail();
@@ -357,6 +381,9 @@
     document.getElementById('loginBtn').addEventListener('click', doLogin);
     document.getElementById('loginPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
     document.getElementById('lockBtn').addEventListener('click', lockIt);
+    document.getElementById('phoneInCheck').addEventListener('change', onFormChanged);
+    document.getElementById('selectAllBtn').addEventListener('click', () => setAllAvail(true, false));
+    document.getElementById('notAvailBtn').addEventListener('click', () => setAllAvail(false, true));
     document.getElementById('logoutBtn').addEventListener('click', doLogout);
 
     // Auto-login if credentials are already remembered on this device.
