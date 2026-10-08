@@ -10,7 +10,7 @@
 //           submission so they can edit and re-lock it.
 
 const { getRedis } = require('../lib/db');
-const { checkAdminPin, checkAnnouncerAuth, setCors, parseBody } = require('../lib/auth');
+const { checkAdminPin, checkAnnouncerAuth, setCors, parseBody, findAccountKey } = require('../lib/auth');
 
 function emptyAvail() {
     const a = {};
@@ -35,6 +35,16 @@ function cleanAvail(a) {
     return out;
 }
 
+function deadlinePassed(win) {
+    const t = Date.parse(win && win.deadline);
+    return !isNaN(t) && Date.now() > t;
+}
+// After the deadline only people the admin has explicitly unlocked may still edit.
+function canEdit(win, rec) {
+    if (rec && rec.locked) return false;
+    return !deadlinePassed(win) || !!(rec && rec.unlockedAt);
+}
+
 module.exports = async function handler(req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') { res.status(204).end(); return; }
@@ -50,7 +60,8 @@ module.exports = async function handler(req, res) {
         if (!admin.ok) { res.status(admin.status).json({ error: admin.error }); return; }
         try {
             const body = parseBody(req);
-            const username = (body.username || '').toString().trim();
+            const accountsMap = (await redis.get('accounts')) || {};
+            const username = findAccountKey(accountsMap, body.username) || (body.username || '').toString().trim();
             if (!username) { res.status(400).json({ error: 'username is required' }); return; }
             const win = await redis.get('window');
             if (!win) { res.status(400).json({ error: 'No availability window is open' }); return; }
@@ -75,12 +86,14 @@ module.exports = async function handler(req, res) {
     const win = await redis.get('window');
 
     if (req.method === 'GET') {
-        if (!win) { res.status(200).json({ window: null, submission: null }); return; }
+        if (!win) { res.status(200).json({ window: null, submission: null, account: { username: auth.username, displayName: auth.account.displayName || auth.username, designation: auth.account.designation || '' } }); return; }
         try {
             const existing = await redis.get(submissionKey(win.windowId, auth.username));
+            const sub = existing || { avail: emptyAvail(), phoneIn: false, locked: false };
             res.status(200).json({
                 window: win,
-                submission: existing || { avail: emptyAvail(), phoneIn: false, locked: false }
+                account: { username: auth.username, displayName: auth.account.displayName || auth.username, designation: auth.account.designation || '' },
+                submission: Object.assign({}, sub, { editable: canEdit(win, existing), deadlinePassed: deadlinePassed(win) })
             });
         } catch (e) {
             console.error('submission GET failed', e);
@@ -99,11 +112,16 @@ module.exports = async function handler(req, res) {
                 res.status(403).json({ error: 'Already locked — contact the admin to make changes' });
                 return;
             }
+            if (!canEdit(win, existing)) {
+                res.status(403).json({ error: 'The deadline has passed — contact the admin to make changes' });
+                return;
+            }
             const body = parseBody(req);
             const record = {
                 avail: cleanAvail(body.avail),
                 phoneIn: !!body.phoneIn,
                 locked: false,
+                unlockedAt: existing ? existing.unlockedAt : undefined,
                 updatedAt: Date.now()
             };
             await redis.set(key, record);
@@ -122,11 +140,16 @@ module.exports = async function handler(req, res) {
                 res.status(403).json({ error: 'Already locked — contact the admin to make changes' });
                 return;
             }
+            if (!canEdit(win, existing)) {
+                res.status(403).json({ error: 'The deadline has passed — contact the admin to make changes' });
+                return;
+            }
             const body = parseBody(req);
             const record = {
                 avail: body.avail ? cleanAvail(body.avail) : (existing ? existing.avail : emptyAvail()),
                 phoneIn: body.phoneIn !== undefined ? !!body.phoneIn : (existing ? existing.phoneIn : false),
                 locked: true,
+                unlockedAt: existing ? existing.unlockedAt : undefined,
                 updatedAt: Date.now(),
                 lockedAt: Date.now()
             };

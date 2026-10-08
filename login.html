@@ -80,6 +80,8 @@
         font-size: 13px;
     }
     .window-banner .label { color: var(--amber); font-weight: 600; margin-bottom: 4px; }
+    .whoami { background: var(--panel, #162a36); border: 1px solid var(--line, rgba(255,255,255,.12)); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; }
+    .whoami .who-line { font-size: 17px; word-break: break-word; }
     .quick-row { display: flex; gap: 8px; margin: 4px 0 8px; }
     .quick-row button { flex: 1; min-height: 44px; font-size: 14px; }
     .grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -137,6 +139,11 @@
 
 <div id="appView" class="hidden">
 
+    <div class="whoami" id="whoami">
+        <div class="who-line">👤 <strong id="whoName"></strong></div>
+        <div class="muted" id="whoUser"></div>
+    </div>
+
     <div class="card" id="noWindowCard" style="display:none; text-align:center;">
         <div class="muted">No availability request is open right now.<br>Check back once the admin opens one.</div>
     </div>
@@ -152,6 +159,12 @@
             <div class="big">🔒</div>
             <div><strong>Your availability is locked in.</strong></div>
             <div class="muted" style="margin-top:6px;">If you need to change something, ask the admin to unlock it for you.</div>
+        </div>
+
+        <div id="closedView" class="locked-banner hidden">
+            <div class="big">⏰</div>
+            <div><strong>The deadline has passed.</strong></div>
+            <div class="muted" style="margin-top:6px;">Please contact the admin if you still need to submit or change your availability.</div>
         </div>
 
         <div id="editView">
@@ -196,6 +209,8 @@
     let currentWindow = null;
     let currentSubmission = null;
     let saveTimer = null;
+    let dirty = false;   // unsaved ticks waiting for the autosave
+    let busy = false;    // a lock/login request is in flight
 
     function creds() {
         return {
@@ -206,13 +221,21 @@
 
     async function api(path, method, body, extraHeaders) {
         const headers = Object.assign({ 'Content-Type': 'application/json' }, extraHeaders || {});
-        const res = await fetch(API_BASE + path, {
-            method: method || 'GET',
-            headers,
-            body: body ? JSON.stringify(body) : undefined
-        });
+        let res;
+        try {
+            res = await fetch(API_BASE + path, {
+                method: method || 'GET',
+                headers,
+                body: body ? JSON.stringify(body) : undefined
+            });
+        } catch (e) {
+            // Offline / server unreachable / header the browser refuses to send.
+            const err = new Error('Could not reach the server — check your internet connection and try again');
+            err.status = 0;
+            throw err;
+        }
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+        if (!res.ok) { const err = new Error(data.error || ('HTTP ' + res.status)); err.status = res.status; throw err; }
         return data;
     }
 
@@ -284,19 +307,24 @@
     }
 
     function onFormChanged() {
+        dirty = true;
         document.getElementById('saveStatus').textContent = 'Saving…';
         clearTimeout(saveTimer);
         saveTimer = setTimeout(saveDraft, 500);
     }
 
     async function saveDraft() {
+        saveTimer = null;
         try {
             const avail = readGridIntoAvail();
             const phoneIn = document.getElementById('phoneInCheck').checked;
             await api('/api/submission', 'POST', { avail, phoneIn }, authHeaders());
+            if (!saveTimer) dirty = false;
             document.getElementById('saveStatus').textContent = 'Saved ✓ (' + new Date().toLocaleTimeString() + ')';
         } catch (e) {
             document.getElementById('saveStatus').textContent = 'Could not save: ' + e.message;
+            // Locked / deadline passed elsewhere: show the real state instead of a form that can't save.
+            if (e.status === 403) { dirty = false; try { await loadSubmission(); } catch (_) {} }
         }
     }
 
@@ -313,6 +341,10 @@
         const anyTicked = Array.from(document.querySelectorAll('#availGrid input[type="checkbox"]')).some((cb) => cb.checked);
         if (!anyTicked && !confirm('You have not ticked any sabha, so this will be recorded as NOT AVAILABLE for the whole week. Continue?')) return;
         if (!confirm('Lock in your availability? You will not be able to change it yourself after this — the admin would need to unlock it for you.')) return;
+        const btn = document.getElementById('lockBtn');
+        if (busy) return;
+        busy = true; btn.disabled = true;
+        clearTimeout(saveTimer); saveTimer = null; dirty = false; // the lock request carries the latest ticks itself
         try {
             const avail = readGridIntoAvail();
             const phoneIn = document.getElementById('phoneInCheck').checked;
@@ -320,13 +352,18 @@
             await loadSubmission();
         } catch (e) {
             alert('Could not lock: ' + e.message);
-        }
+        } finally { busy = false; btn.disabled = false; }
     }
 
     async function loadSubmission() {
         const data = await api('/api/submission', 'GET', null, authHeaders());
         currentWindow = data.window;
         currentSubmission = data.submission;
+        if (data.account) {
+            document.getElementById('whoName').textContent = data.account.displayName;
+            document.getElementById('whoUser').textContent = 'Logged in as ' + data.account.username +
+                (data.account.designation ? ' · ' + data.account.designation : '');
+        }
         render();
     }
 
@@ -341,10 +378,12 @@
         document.getElementById('windowDeadline').textContent = fmtDeadline(currentWindow.deadline);
 
         const locked = currentSubmission && currentSubmission.locked;
+        const closed = !locked && currentSubmission && currentSubmission.editable === false;
         document.getElementById('lockedView').classList.toggle('hidden', !locked);
-        document.getElementById('editView').classList.toggle('hidden', !!locked);
+        document.getElementById('closedView').classList.toggle('hidden', !closed);
+        document.getElementById('editView').classList.toggle('hidden', !!locked || !!closed);
 
-        if (!locked) {
+        if (!locked && !closed) {
             buildGrid(currentSubmission ? currentSubmission.avail : emptyAvail());
             document.getElementById('phoneInCheck').checked = !!(currentSubmission && currentSubmission.phoneIn);
         }
@@ -356,6 +395,12 @@
         const errEl = document.getElementById('loginError');
         errEl.textContent = '';
         if (!username || !password) { errEl.textContent = 'Enter both username and password'; return; }
+        if (!/^[\x20-\x7E]+$/.test(username) || !/^[\x20-\x7E]+$/.test(password)) {
+            errEl.textContent = 'Username and password use plain English letters/digits only';
+            return;
+        }
+        if (busy) return;
+        busy = true;
         localStorage.setItem('portal-username', username);
         localStorage.setItem('portal-password', password);
         try {
@@ -366,10 +411,14 @@
             localStorage.removeItem('portal-username');
             localStorage.removeItem('portal-password');
             errEl.textContent = e.message;
-        }
+        } finally { busy = false; }
     }
 
     function doLogout() {
+        // Cancel any pending autosave first, so it can never fire later under the NEXT person's login.
+        clearTimeout(saveTimer); saveTimer = null; dirty = false;
+        currentWindow = null; currentSubmission = null;
+        document.getElementById('availGrid').innerHTML = '';
         localStorage.removeItem('portal-username');
         localStorage.removeItem('portal-password');
         document.getElementById('appView').classList.add('hidden');
@@ -395,11 +444,29 @@
                 document.getElementById('loginView').classList.add('hidden');
                 document.getElementById('appView').classList.remove('hidden');
             } catch (e) {
-                localStorage.removeItem('portal-username');
-                localStorage.removeItem('portal-password');
+                // Only forget the saved login if the server actually rejected it. A bad connection
+                // must not log people out and make them retype their password.
+                if (e.status === 401 || e.status === 400) {
+                    localStorage.removeItem('portal-username');
+                    localStorage.removeItem('portal-password');
+                } else {
+                    document.getElementById('loginUsername').value = c.username;
+                    document.getElementById('loginError').textContent = e.message;
+                }
             }
         }
     })();
+
+    // A page left open must notice a newly opened window / admin changes: refresh when the
+    // person comes back to the tab, but never while they have unsaved ticks or a request running.
+    document.addEventListener('visibilitychange', async () => {
+        if (document.visibilityState !== 'visible') return;
+        if (document.getElementById('appView').classList.contains('hidden')) return;
+        if (dirty || busy || saveTimer) return;
+        try { await loadSubmission(); } catch (e) {
+            if (e.status === 401) doLogout();
+        }
+    });
 </script>
 
 </body>

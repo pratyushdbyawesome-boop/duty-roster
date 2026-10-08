@@ -44,6 +44,17 @@ module.exports = async function handler(req, res) {
         if (body.op === 'finalize') {
             const w = body.week;
             if (!isObj(w) || !Array.isArray(w.slots)) { res.status(400).json({ error: 'week.slots is required' }); return; }
+            // Finalising a week that is already logged REPLACES it (reverse its counts first),
+            // so double-taps / re-finalising never double-count duties.
+            if (w.weekStart) {
+                const i = rosterLog.findIndex((x) => x && x.weekStart === w.weekStart);
+                if (i >= 0) {
+                    (rosterLog[i].slots || []).forEach((sl) => {
+                        if (sl && sl.name && history[sl.name]) { history[sl.name]--; if (history[sl.name] <= 0) delete history[sl.name]; }
+                    });
+                    rosterLog.splice(i, 1);
+                }
+            }
             w.slots.forEach((s) => { if (s && s.name) history[s.name] = (history[s.name] || 0) + 1; });
             rosterLog.push(w);
             if (rosterLog.length > MAX_WEEKS) rosterLog = rosterLog.slice(-MAX_WEEKS);

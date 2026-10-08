@@ -5,6 +5,13 @@
 const { getRedis } = require('../lib/db');
 const { randomSalt, hashPassword, checkAdminPin, setCors, parseBody, normalizeUsername, findAccountKey } = require('../lib/auth');
 
+// Usernames/passwords travel in HTTP headers, which can only carry plain ASCII — a Hindi/emoji
+// password would make login crash in the browser. Display names (shown to people) can be anything.
+const USERNAME_RE = /^[a-z0-9._-]{2,32}$/;
+const PASSWORD_RE = /^[\x20-\x7E]{4,64}$/;
+const USERNAME_MSG = 'Username must be 2-32 characters: lowercase letters, digits, dot, dash or underscore (no spaces)';
+const PASSWORD_MSG = 'Password must be 4-64 plain English characters (letters, digits, symbols — no Hindi/emoji)';
+
 module.exports = async function handler(req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') { res.status(204).end(); return; }
@@ -57,13 +64,15 @@ module.exports = async function handler(req, res) {
             } else {
                 if (existing) { res.status(409).json({ error: 'Username "' + existingKey + '" already exists — use Edit/Reset password on that row instead' }); return; }
                 if (!body.password) { res.status(400).json({ error: 'password is required when creating a new account' }); return; }
+                if (!USERNAME_RE.test(typed)) { res.status(400).json({ error: USERNAME_MSG }); return; }
             }
 
+            if (body.password && !PASSWORD_RE.test(body.password.toString())) { res.status(400).json({ error: PASSWORD_MSG }); return; }
             let key = existingKey || typed;
             let renamedFrom = null;
             if (isUpdate && body.newUsername) {
                 const nu = normalizeUsername(body.newUsername);
-                if (!nu || /\s/.test(nu)) { res.status(400).json({ error: 'New username must not be empty or contain spaces' }); return; }
+                if (!USERNAME_RE.test(nu)) { res.status(400).json({ error: USERNAME_MSG }); return; }
                 if (nu !== normalizeUsername(existingKey)) {
                     if (findAccountKey(accounts, nu)) { res.status(409).json({ error: 'Username "' + nu + '" is already taken' }); return; }
                     renamedFrom = existingKey;

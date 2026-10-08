@@ -34,17 +34,26 @@ module.exports = async function handler(req, res) {
         if (!auth.ok) { res.status(auth.status).json({ error: auth.error }); return; }
         try {
             const body = parseBody(req);
-            const { fromDate, toDate, deadline, label } = body;
-            if (!fromDate || !toDate || !deadline) {
-                res.status(400).json({ error: 'fromDate, toDate and deadline are all required' });
+            const { fromDate, deadline, label } = body;
+            if (!fromDate || !deadline) {
+                res.status(400).json({ error: 'fromDate and deadline are required' });
                 return;
             }
+            // The whole app indexes the week as Sun=0..Sat=6, so a window MUST start on a Sunday —
+            // otherwise availability would be mapped onto the wrong weekdays.
+            const from = /^\d{4}-\d{2}-\d{2}$/.test(fromDate) ? new Date(fromDate + 'T00:00:00Z') : null;
+            if (!from || isNaN(from)) { res.status(400).json({ error: 'fromDate must be a valid YYYY-MM-DD date' }); return; }
+            if (from.getUTCDay() !== 0) { res.status(400).json({ error: 'The week must start on a Sunday' }); return; }
+            const dl = new Date(deadline);
+            if (isNaN(dl)) { res.status(400).json({ error: 'deadline is not a valid date/time' }); return; }
+            if (dl.getTime() <= Date.now()) { res.status(400).json({ error: 'The deadline must be in the future' }); return; }
+            const toDate = new Date(from.getTime() + 6 * 86400000).toISOString().slice(0, 10);
             const win = {
                 windowId: Date.now().toString(36),
                 fromDate,
                 toDate,
                 deadline,
-                label: label || '',
+                label: (label || '').toString().slice(0, 80),
                 createdAt: Date.now()
             };
             await redis.set('window', win);

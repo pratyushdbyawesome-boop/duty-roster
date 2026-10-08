@@ -557,6 +557,33 @@
         .logout-btn:hover { background: var(--amber); color: #1a1205; }
         header .eyebrow { padding-right: 110px; }
         @media (max-width: 700px) { .logout-btn { top: 8px; right: 10px; min-height: 38px; } }
+
+        /* ═══ BIGGER HEADINGS + CLEAR DROPDOWN HEADERS ═══ */
+        .section-title { font-size: clamp(22px, 3.4vw, 28px); font-weight: 600; letter-spacing: .05em; gap: 14px; margin-bottom: 8px; line-height: 1.2; }
+        .section-sub { font-size: 14.5px; line-height: 1.55; }
+        .tabnav button { font-size: 15px; }
+        #oaPanels h4, .card h4 { font-size: 16px; color: var(--amber); }
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        details.panel > summary, details.more > summary, details.parser-box > summary, details.week-det > summary {
+            display: flex; align-items: center; gap: 10px; cursor: pointer; min-height: 48px; padding: 10px 14px;
+            font-size: 16.5px; font-weight: 600; color: var(--paper); line-height: 1.3;
+            background: rgba(240,166,46,.10); border: 1px solid rgba(240,166,46,.40); border-radius: 8px; }
+        details.panel > summary:hover, details.more > summary:hover, details.parser-box > summary:hover, details.week-det > summary:hover { background: rgba(240,166,46,.18); }
+        details.panel > summary::before, details.more > summary::before, details.parser-box > summary::before, details.week-det > summary::before,
+        details.about > summary::before {
+            content: '▸'; color: var(--amber); font-size: 22px; line-height: 1; transition: transform .15s; flex: 0 0 auto; }
+        details[open] > summary::before { transform: rotate(90deg); }
+        details.panel > summary .count-badge { margin-left: auto; font-size: 13px; padding: 1px 10px; }
+        details.panel[open] > summary, details.more[open] > summary, details.parser-box[open] > summary, details.week-det[open] > summary { margin-bottom: 10px; }
+        details.about > summary { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; padding: 8px 0; }
+        details.about > summary::before { font-size: 18px; }
+        details.panel { padding: 8px; }
+        details.week-det { padding: 6px; }
+        @media (max-width: 700px) {
+            .section-title { font-size: 23px; }
+            details.panel > summary, details.more > summary, details.parser-box > summary, details.week-det > summary { font-size: 16px; padding: 10px 12px; }
+        }
     </style>
 </head>
 <body class="locked">
@@ -592,10 +619,10 @@
     <div id="summaryStrip" class="summary-strip"></div>
     <nav id="tabNav" class="tabnav" aria-label="Sections">
         <button data-tab="week">⚙️ Week</button>
-        <button data-tab="announcers">👥 Announcers</button>
+        <button data-tab="announcers">👥 Availability</button>
         <button data-tab="roster">📋 Roster</button>
         <button data-tab="history">🕘 History</button>
-        <button data-tab="chart">🗓️ Duty chart</button>
+        <button data-tab="chart">🗓️ Other duties</button>
         <button data-tab="online">🌐 Online</button>
     </nav>
 
@@ -644,7 +671,7 @@
 
         <!-- ═══ 2 · AVAILABILITY GRID ═══ -->
         <section data-tab="announcers">
-            <div class="section-title">2 · Announcers &amp; Availability</div>
+            <div class="section-title">2 · Availability</div>
             <div class="card">
                 <div class="toolbar" style="margin-top:0;">
                     <button id="toggleAnnListBtn" aria-expanded="false">👥 <span id="annToggleLabel">View announcers</span> <span id="annCountBadge" class="count-badge">0</span></button>
@@ -721,7 +748,7 @@
 
         <!-- ═══ 5 · SIMPLE DUTY CHART (e.g. Vichar Bindu style) ═══ -->
         <section data-tab="chart">
-            <div class="section-title">5 · Duty Chart Generator</div>
+            <div class="section-title">5 · Other Duties</div>
             <div class="section-sub">For simple "one person, one date" charts (like Vichar Bindu) — different from the sabha roster above. Fill this in and download a ready-to-use, already-formatted Excel file every time — no reformatting needed after download.</div>
             <div class="card">
                 <div class="row">
@@ -780,7 +807,7 @@
 
         <section data-tab="online">
             <div class="section-title">6 · Online Availability Collection</div>
-            <div class="section-sub">An alternative to pasting WhatsApp messages: give each announcer their own login to <code>login.html</code>, open a window for a specific week, and fetch their locked-in answers straight into the Announcers list once everyone has submitted.</div>
+            <div class="section-sub">An alternative to pasting WhatsApp messages: give each announcer their own login to <code>login.html</code>, open a window for a specific week, and fetch their locked-in answers straight into the Availability tab once everyone has submitted.</div>
             <div class="card">
                 <details class="more" style="margin-top:0;" id="oaConnDetails">
                     <summary id="oaConnSummary">🔌 Server connection</summary>
@@ -824,7 +851,7 @@
                         <div id="oaStatusTableWrap" class="tbl-wrap" style="margin-top:8px;"></div>
                         <div class="toolbar">
                             <button id="oaRefreshStatusBtn" class="ghost">🔄 Refresh status</button>
-                            <button id="oaFetchBtn">⬇ Fetch locked‑in availability into the Announcers list</button>
+                            <button id="oaFetchBtn">⬇ Fetch locked‑in availability into the Availability list</button>
                         </div>
                         <div id="oaFetchResult" class="muted" style="font-size:12.5px;"></div>
                     </details>
@@ -1358,7 +1385,8 @@
             const marked = state.announcers.filter(a => a.phoneIn || DAYS.some((_, d) => a.avail && a.avail[d] && SABHAS.some(sb => a.avail[d][sb.key]))).length;
             const last = state.rosterLog.length ? state.rosterLog[state.rosterLog.length - 1] : null;
             const chips = [];
-            chips.push('<span class="chip">Week: <b>' + escapeHtml(state.weekStart || 'not set') + '</b></span>');
+            const notSunday = state.weekStart && new Date(state.weekStart + 'T00:00:00').getDay() !== 0;
+            chips.push('<span class="chip' + (notSunday ? ' warn' : '') + '" ' + (notSunday ? 'title="Not a Sunday"' : '') + '>Week: <b>' + escapeHtml(state.weekStart || 'not set') + '</b>' + (notSunday ? ' ⚠ not a Sunday' : '') + '</span>');
             chips.push('<span class="chip">Announcers: <b>' + n + '</b></span>');
             if (oaConfig().enabled) {
                 chips.push('<span class="chip' + (oaWindow ? '' : ' warn') + '">Online window: <b>' + (oaWindow ? escapeHtml(oaWindow.fromDate + ' → ' + oaWindow.toDate) : 'none open') + '</b></span>');
@@ -2711,8 +2739,8 @@
                     const idx = state.rosterLog.length - 1 - i;
                     const label = week.weekStart ? week.weekStart : '(no date set)';
                     html += `
-                        <details style="background:var(--ink);border-radius:8px;padding:8px 12px;">
-                            <summary style="cursor:pointer;font-size:13px;">Week of ${escapeHtml(label)} — ${week.slots.filter(s=>s.name).length}/${week.slots.length} filled</summary>
+                        <details class="week-det" style="background:var(--ink);border-radius:8px;padding:8px;">
+                            <summary>Week of ${escapeHtml(label)} — ${week.slots.filter(s=>s.name).length}/${week.slots.length} filled</summary>
                             <div class="tbl-wrap"><table class="grid" style="margin-top:8px;">
                                 <thead><tr><th>Day</th><th>Duty</th><th>Assigned to</th></tr></thead>
                                 <tbody>
@@ -3043,6 +3071,10 @@
             const deadlineLocal = document.getElementById('oaDeadline').value;
             const label = document.getElementById('oaLabel').value.trim();
             if (!fromDate || !deadlineLocal) { toast('Pick a week-start date and a deadline'); return; }
+            // The app maps availability as Sun=0..Sat=6, so a window starting on any other day would
+            // put people's answers on the wrong weekdays.
+            if (new Date(fromDate + 'T00:00:00').getDay() !== 0) { toast('The week must start on a Sunday — ' + fromDate + ' is not a Sunday'); return; }
+            if (isNaN(new Date(deadlineLocal)) || new Date(deadlineLocal) <= new Date()) { toast('The deadline must be a time in the future'); return; }
             const toDate = (function () {
                 const d = new Date(fromDate + 'T00:00:00');
                 d.setDate(d.getDate() + 6);
@@ -3298,6 +3330,9 @@
             // ── week start change ──
             document.getElementById('weekStart').addEventListener('change', function() {
                 state.weekStart = this.value;
+                if (this.value && new Date(this.value + 'T00:00:00').getDay() !== 0) {
+                    toast('⚠ That date is not a Sunday — weekdays and dates in the roster will not line up. Pick the Sunday that starts the week.');
+                }
                 saveState();
             });
 
@@ -3489,6 +3524,8 @@
                 if (!state.lastRoster) { toast('Generate a roster first'); return; }
                 const btn = this;
                 if (btn.disabled) return;
+                if (state.weekStart && state.rosterLog.some(w => w.weekStart === state.weekStart) &&
+                    !confirm('The week of ' + state.weekStart + ' is already in the history. Replace it with this roster?\n\n(Its old duty counts are removed first, so nothing is counted twice.)')) return;
                 const count = state.lastRoster.filter(a => a.announcer).length;
                 // Snapshot this week (name only, so it still reads fine even if that announcer
                 // is later removed). The server adds +1 per filled slot and appends the week.
